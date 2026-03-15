@@ -118,22 +118,7 @@ A wireless network engineer wants per-radio metrics (channel, client count, tx/r
 
 ---
 
-### User Story 8 - Alert on Error Rate Thresholds (Priority: P4)
-
-A network operations team wants to write `pmie` rules that fire alerts when switch port error rates exceed thresholds, using standard PCP alerting mechanisms.
-
-**Why this priority**: Alerting is a consumption pattern for the metrics, not a feature of the PMDA itself. It works automatically if P1 metrics are correctly typed as counters, so this is really a validation story.
-
-**Independent Test**: Can be tested by writing a `pmie` rule against `unifi.switch.port.rx_errors` and verifying it evaluates correctly.
-
-**Acceptance Scenarios**:
-
-1. **Given** a `pmie` rule checking `rate(unifi.switch.port.rx_errors) > 100`, **When** a port's error counter increases rapidly, **Then** the rule fires across all matching instances.
-2. **Given** counter values with correct `PM_SEM_COUNTER` semantics, **When** PCP tools compute rates, **Then** counter wraps and device reboots are handled gracefully without spurious spikes.
-
----
-
-### User Story 9 - Multi-Controller, Multi-Site Unified Monitoring (Priority: P4)
+### User Story 8 - Multi-Controller, Multi-Site Unified Monitoring (Priority: P4)
 
 An enterprise network administrator managing multiple UniFi controllers across branch offices wants all controllers' metrics unified under a single PCP namespace, with site-qualified instance names enabling cross-site comparison.
 
@@ -155,7 +140,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - What happens when the API key is revoked while the PMDA is running? All subsequent polls fail, `unifi.controller.up` drops to 0, errors are logged, and the last successful snapshot is served until the key is restored.
 - What happens when the controller returns an unexpected JSON schema (e.g. after a firmware update)? The PMDA uses defensive parsing (`.get()` with defaults), logs warnings for missing expected fields, and continues with available data.
 - What happens when a switch has 48+ ports and 200+ MACs per port? The instance domain scales linearly; the `mac_count` metric per port helps operators identify high-density ports without tracking individual MACs.
-- What happens with SSL certificate validation on self-signed UniFi controllers? Configurable via `verify_ssl` (default: false for ease of setup, recommended true in production with `ca_cert` path).
+- What happens with SSL certificate validation on self-signed UniFi controllers? `verify_ssl` defaults to `true`. The Install script detects self-signed certificates and prompts the operator to explicitly disable verification with a security warning. A `ca_cert` path option is available for custom CA bundles.
 
 ## Requirements *(mandatory)*
 
@@ -169,11 +154,11 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **FR-006**: System MUST support non-interactive installation via environment variables for automation tooling.
 - **FR-007**: System MUST collect site-level aggregate metrics (client counts, device counts, WAN/LAN/WLAN throughput counters).
 - **FR-008**: System MUST collect per-device metadata (name, MAC, IP, model, type, firmware version, uptime, state).
-- **FR-009**: System MUST collect per-client metrics (hostname, IP, MAC, switch location, traffic counters) with a configurable cardinality cap (`max_clients`).
+- **FR-009**: System MUST collect per-client metrics (hostname, IP, MAC, switch location, traffic counters) with a configurable soft cardinality cap (`max_clients`, default 1000, 0 = unlimited). When the cap is reached, the PMDA MUST log a warning indicating the limit is active and capping, and track only the top N clients by traffic volume.
 - **FR-010**: System MUST provide a companion `unifi2dot` tool that queries the UniFi controller API to discover intra-site network topology from uplink tables and LLDP data, and outputs graph formats (DOT, JSON) with references to the corresponding PMDA port metric instance names.
 - **FR-011**: System MUST collect per-switch-port PoE metrics (enabled, power, voltage, current, class) where available.
 - **FR-012**: System MUST collect per-AP radio metrics (channel, radio type, traffic counters, client count, satisfaction score).
-- **FR-013**: System MUST use per-controller background poller threads with a copy-on-write snapshot cache, ensuring the PMCD dispatch thread never blocks on network I/O.
+- **FR-013**: System MUST use per-controller background poller threads with a copy-on-write snapshot cache, ensuring the PMCD dispatch thread never blocks on network I/O. Poll interval is configurable per-controller (default 30 seconds, minimum 10 seconds).
 - **FR-014**: System MUST handle controller unavailability gracefully — retaining the last successful snapshot, logging errors, and exposing controller health via `unifi.controller.*` metrics.
 - **FR-015**: System MUST attach PCP metric labels (`site_name`, `device_mac`, `device_type`, `device_model`, `port_idx`, `controller_url`) to all instances.
 - **FR-016**: System MUST support multiple controllers in a single PMDA process via `[controller:NAME]` configuration sections, with site-qualified instance names preventing collisions.
@@ -183,7 +168,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **FR-020**: System MUST export raw counter values only — pre-computed rate fields from the UniFi API are deliberately excluded to maintain PCP counter semantics consistency.
 - **FR-021**: The `unifi2dot` companion tool MUST support both Graphviz DOT and JSON output formats for network visualisation.
 - **FR-022**: System MUST be distributable via PyPI (`pip install pcp-pmda-unifi`) with `requests` as the only pip-installable dependency.
-- **FR-023**: System MUST support optional DPI (Deep Packet Inspection) category-level traffic metrics as an opt-in feature.
+- **FR-023**: System MUST support optional DPI (Deep Packet Inspection) metrics as an opt-in feature, exposing per-site, per-DPI-category traffic totals (rx/tx bytes) in a `dpi_category` instance domain (~20 categories: Streaming, Social, Gaming, etc.). Per-device DPI breakdown is deferred to a future release.
 - **FR-024**: System MUST run as the unprivileged `pcp` user with the configuration file restricted to `root:pcp` ownership (mode 0640).
 
 ### Key Entities
@@ -201,13 +186,23 @@ An enterprise network administrator managing multiple UniFi controllers across b
 
 - **SC-001**: An administrator can go from zero to seeing live switch port metrics in under 2 minutes using the interactive Install script.
 - **SC-002**: All switch port traffic counters update within 30 seconds of the data changing on the UniFi controller (within one poll cycle at default interval).
-- **SC-003**: The PMDA correctly tracks at least 2,400 switch port instances (50 switches x 48 ports) without degradation in fetch response time.
+- **SC-003**: The PMDA correctly tracks at least 2,400 switch port instances (50 switches x 48 ports) with fetch response time under 4 seconds (below PCP's 5-second PMDA timeout). If a fetch exceeds 4 seconds, the PMDA MUST log a warning indicating it is approaching the PCP timeout threshold.
 - **SC-004**: Dynamic instance domain changes (devices added/removed) are reflected within one poll cycle without PMDA restart.
 - **SC-005**: Multi-controller deployments produce collision-free instance names that support cross-site filtering via instance name patterns (e.g. filtering by `hq/.*`).
 - **SC-006**: Controller connectivity failures are detected within one poll cycle and reflected in controller health metrics, enabling alerting on PMDA health.
 - **SC-007**: 90% or greater line coverage on all non-framework code, with unit, integration, and end-to-end test tiers all passing in CI.
 - **SC-008**: The PMDA runs continuously for 7+ days without memory leaks, crashes, or stale data when the controller is stable.
 - **SC-009**: The `unifi2dot` companion tool correctly discovers topology links for all directly connected UniFi device pairs within a single site and outputs valid graph files with correct PMDA metric instance references.
+
+## Clarifications
+
+### Session 2026-03-15
+
+- Q: What is the poll interval model? → A: Configurable per-controller, default 30s, minimum 10s.
+- Q: What should the default max_clients cap be? → A: Soft cap of 1000 (configurable, 0 = unlimited). Log warning when cap is reached and capping is active.
+- Q: What is the maximum acceptable fetch response time at 2,400 instances? → A: 4 seconds (under PCP's 5s timeout). Log warning if fetch exceeds 4s threshold.
+- Q: What DPI metrics should be exposed? → A: Per-site, per-DPI-category traffic totals only (rx/tx bytes, ~20 categories). Per-device DPI deferred to future release.
+- Q: What should the default SSL verification posture be? → A: Default verify_ssl=true. Install script detects self-signed certs and offers to disable with explicit security warning.
 
 ## Assumptions
 
