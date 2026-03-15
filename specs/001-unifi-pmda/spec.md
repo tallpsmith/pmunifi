@@ -57,22 +57,7 @@ A network operations team wants site-level aggregate metrics (total clients, dev
 
 ---
 
-### User Story 4 - Archive and Replay Historical Metrics (Priority: P2)
-
-A capacity planning engineer wants to archive UniFi metrics with `pmlogger` and replay them later for trend analysis, ensuring dynamic instance domains (devices appearing/disappearing) are captured faithfully.
-
-**Why this priority**: Archiving is what elevates this from a live monitoring tool to a capacity planning tool. It's a core PCP capability that must work correctly with dynamic instances.
-
-**Independent Test**: Can be tested by running `pmlogger` for a short capture period, then replaying with `pmval -a archive` and verifying values match.
-
-**Acceptance Scenarios**:
-
-1. **Given** a running PMDA, **When** `pmlogger` archives `unifi.switch.port.*` for 5 minutes, **Then** replaying the archive with `pmval -a` shows correct per-port counter values at each sample time.
-2. **Given** a device is adopted during an archive capture, **When** the archive is replayed, **Then** the new device's instances appear at the correct point in the timeline.
-
----
-
-### User Story 5 - Track Connected Clients and Their Switch Ports (Priority: P3)
+### User Story 4 - Track Connected Clients and Their Switch Ports (Priority: P3)
 
 A network administrator wants to see which clients are connected to which switch ports, including client hostname, IP, MAC, and per-client traffic counters, to troubleshoot connectivity and identify heavy users.
 
@@ -88,22 +73,23 @@ A network administrator wants to see which clients are connected to which switch
 
 ---
 
-### User Story 6 - Discover and Export Network Topology (Priority: P3)
+### User Story 5 - Discover and Export Network Topology (Priority: P3)
 
-A network engineer wants the PMDA to automatically discover how UniFi devices are interconnected (switch-to-switch uplinks, AP-to-switch connections) and expose this as structured metrics so topology can be visualised.
+A network engineer wants a companion tool that discovers how UniFi devices are interconnected (switch-to-switch uplinks, AP-to-switch connections) and outputs a structured graph with references to the corresponding PMDA port metrics, so topology can be visualised with live traffic overlays.
 
-**Why this priority**: Topology is a differentiating feature no other PCP PMDA offers, but it depends on device and port data being solid first. It enables topology-aware visualisations and the `unifi2dot` companion tool.
+**Why this priority**: Topology visualisation is a differentiating feature, but it depends on device and port data being solid first. It is implemented as a companion tool rather than as PMDA metrics because graph adjacency is structural data, not time-series data — PCP metrics are not designed to carry unbounded relational structures.
 
-**Independent Test**: Can be tested by querying `pminfo -f unifi.topology.src_device` and verifying discovered links match the physical network connections.
+**Independent Test**: Can be tested by running the `unifi2dot` companion tool against a controller and verifying the output graph matches the physical network connections, with correct metric name references on each edge.
 
 **Acceptance Scenarios**:
 
-1. **Given** switches connected via uplink ports, **When** the PMDA polls, **Then** each device-to-device link appears in the `topology_link` instance domain with source device/port, destination device/port, speed, and traffic counters.
-2. **Given** topology data is available, **When** the `unifi2dot` companion script runs, **Then** it outputs a valid Graphviz DOT file representing the network graph.
+1. **Given** switches connected via uplink ports, **When** the `unifi2dot` companion tool queries the UniFi controller, **Then** it outputs a valid Graphviz DOT file where nodes are devices and edges represent physical links annotated with the corresponding `unifi.switch.port.*` metric instance names.
+2. **Given** a DOT file produced by `unifi2dot`, **When** combined with live PCP metric data, **Then** a visualisation tool can overlay per-port traffic rates onto the topology edges.
+3. **Given** a JSON output mode is requested, **When** `unifi2dot --format json` runs, **Then** it outputs a structured JSON graph suitable for D3.js or similar visualisation libraries.
 
 ---
 
-### User Story 7 - Monitor PoE Power Delivery Per Port (Priority: P3)
+### User Story 6 - Monitor PoE Power Delivery Per Port (Priority: P3)
 
 A facilities engineer wants to monitor Power over Ethernet metrics (power draw, voltage, current) for each switch port to track power budgets and detect failing PoE devices.
 
@@ -118,7 +104,7 @@ A facilities engineer wants to monitor Power over Ethernet metrics (power draw, 
 
 ---
 
-### User Story 8 - Monitor Access Point Radio Performance (Priority: P4)
+### User Story 7 - Monitor Access Point Radio Performance (Priority: P4)
 
 A wireless network engineer wants per-radio metrics (channel, client count, tx/rx bytes, retries, satisfaction score) for each access point to identify coverage gaps and congestion.
 
@@ -132,7 +118,7 @@ A wireless network engineer wants per-radio metrics (channel, client count, tx/r
 
 ---
 
-### User Story 9 - Alert on Error Rate Thresholds (Priority: P4)
+### User Story 8 - Alert on Error Rate Thresholds (Priority: P4)
 
 A network operations team wants to write `pmie` rules that fire alerts when switch port error rates exceed thresholds, using standard PCP alerting mechanisms.
 
@@ -147,7 +133,7 @@ A network operations team wants to write `pmie` rules that fire alerts when swit
 
 ---
 
-### User Story 10 - Multi-Controller, Multi-Site Unified Monitoring (Priority: P4)
+### User Story 9 - Multi-Controller, Multi-Site Unified Monitoring (Priority: P4)
 
 An enterprise network administrator managing multiple UniFi controllers across branch offices wants all controllers' metrics unified under a single PCP namespace, with site-qualified instance names enabling cross-site comparison.
 
@@ -184,7 +170,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **FR-007**: System MUST collect site-level aggregate metrics (client counts, device counts, WAN/LAN/WLAN throughput counters).
 - **FR-008**: System MUST collect per-device metadata (name, MAC, IP, model, type, firmware version, uptime, state).
 - **FR-009**: System MUST collect per-client metrics (hostname, IP, MAC, switch location, traffic counters) with a configurable cardinality cap (`max_clients`).
-- **FR-010**: System MUST construct intra-site network topology from uplink tables, LLDP data, and port MAC tables, exposing device-to-device links as topology metrics.
+- **FR-010**: System MUST provide a companion `unifi2dot` tool that queries the UniFi controller API to discover intra-site network topology from uplink tables and LLDP data, and outputs graph formats (DOT, JSON) with references to the corresponding PMDA port metric instance names.
 - **FR-011**: System MUST collect per-switch-port PoE metrics (enabled, power, voltage, current, class) where available.
 - **FR-012**: System MUST collect per-AP radio metrics (channel, radio type, traffic counters, client count, satisfaction score).
 - **FR-013**: System MUST use per-controller background poller threads with a copy-on-write snapshot cache, ensuring the PMCD dispatch thread never blocks on network I/O.
@@ -195,7 +181,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **FR-018**: System MUST handle the UniFi OS API path prefix (`/proxy/network`) automatically when `is_udm = true`.
 - **FR-019**: System MUST provide a `Remove` script that deregisters the PMDA from PMCD without deleting the configuration file.
 - **FR-020**: System MUST export raw counter values only — pre-computed rate fields from the UniFi API are deliberately excluded to maintain PCP counter semantics consistency.
-- **FR-021**: System MUST provide a companion `unifi2dot` script that queries PCP topology metrics and outputs Graphviz DOT format for network visualisation.
+- **FR-021**: The `unifi2dot` companion tool MUST support both Graphviz DOT and JSON output formats for network visualisation.
 - **FR-022**: System MUST be distributable via PyPI (`pip install pcp-pmda-unifi`) with `requests` as the only pip-installable dependency.
 - **FR-023**: System MUST support optional DPI (Deep Packet Inspection) category-level traffic metrics as an opt-in feature.
 - **FR-024**: System MUST run as the unprivileged `pcp` user with the configuration file restricted to `root:pcp` ownership (mode 0640).
@@ -207,7 +193,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **Device**: A UniFi network device (switch, access point, gateway, console) adopted by a controller. Identified by MAC address. Has model, firmware, uptime, and state.
 - **Switch Port**: A physical port on a switch device. Identified by device + port index. Carries traffic counters, link state, speed, and PoE telemetry. The central entity for the PMDA's core use case.
 - **Client**: A connected network station (wired or wireless). Identified by MAC address. Mapped to a switch port via `sw_mac`/`sw_port`. Has traffic counters and connection metadata.
-- **Topology Link**: A discovered connection between two UniFi devices, derived from uplink tables and LLDP data. Has source/destination device and port, link speed, and traffic counters.
+- **Topology Link**: A discovered connection between two UniFi devices, derived from uplink tables and LLDP data by the companion `unifi2dot` tool. Has source/destination device and port, link speed, and references to the corresponding PMDA port metric instances.
 
 ## Success Criteria *(mandatory)*
 
@@ -217,12 +203,11 @@ An enterprise network administrator managing multiple UniFi controllers across b
 - **SC-002**: All switch port traffic counters update within 30 seconds of the data changing on the UniFi controller (within one poll cycle at default interval).
 - **SC-003**: The PMDA correctly tracks at least 2,400 switch port instances (50 switches x 48 ports) without degradation in fetch response time.
 - **SC-004**: Dynamic instance domain changes (devices added/removed) are reflected within one poll cycle without PMDA restart.
-- **SC-005**: Archived metrics can be replayed with full fidelity, including dynamic instance domain changes captured at the correct timestamps.
-- **SC-006**: Multi-controller deployments produce collision-free instance names that support cross-site filtering via instance name patterns (e.g. filtering by `hq/.*`).
-- **SC-007**: Controller connectivity failures are detected within one poll cycle and reflected in controller health metrics, enabling alerting on PMDA health.
-- **SC-008**: 90% or greater line coverage on all non-framework code, with unit, integration, and end-to-end test tiers all passing in CI.
-- **SC-009**: The PMDA runs continuously for 7+ days without memory leaks, crashes, or stale data when the controller is stable.
-- **SC-010**: Network topology links are correctly discovered for all directly connected UniFi device pairs within a single site.
+- **SC-005**: Multi-controller deployments produce collision-free instance names that support cross-site filtering via instance name patterns (e.g. filtering by `hq/.*`).
+- **SC-006**: Controller connectivity failures are detected within one poll cycle and reflected in controller health metrics, enabling alerting on PMDA health.
+- **SC-007**: 90% or greater line coverage on all non-framework code, with unit, integration, and end-to-end test tiers all passing in CI.
+- **SC-008**: The PMDA runs continuously for 7+ days without memory leaks, crashes, or stale data when the controller is stable.
+- **SC-009**: The `unifi2dot` companion tool correctly discovers topology links for all directly connected UniFi device pairs within a single site and outputs valid graph files with correct PMDA metric instance references.
 
 ## Assumptions
 
@@ -241,7 +226,7 @@ An enterprise network administrator managing multiple UniFi controllers across b
 **In Scope:**
 - Switch port traffic monitoring (site, device, port, PoE, controller health metrics)
 - Client tracking with cardinality controls
-- Intra-site topology discovery and export
+- Intra-site topology discovery and export via companion `unifi2dot` tool (not as PMDA metrics)
 - AP radio metrics
 - Gateway WAN metrics
 - DPI category metrics (opt-in)
