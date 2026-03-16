@@ -24,10 +24,11 @@ jobs:
       - name: Validate tag matches built version
         run: |
           pip install hatchling hatch-vcs
-          TAG="${GITHUB_REF#refs/tags/v}"
+          RAW_TAG="${GITHUB_REF#refs/tags/v}"
+          TAG=$(python -c "from packaging.version import Version; print(Version('$RAW_TAG'))")
           PKG_VERSION=$(hatchling version)
-          echo "Git tag: v$TAG → Package version: $PKG_VERSION"
-          [ "$TAG" = "$PKG_VERSION" ] || { echo "::error::Tag v$TAG does not match package version $PKG_VERSION"; exit 1; }
+          echo "Git tag: v$RAW_TAG → Normalized: $TAG → Package version: $PKG_VERSION"
+          [ "$TAG" = "$PKG_VERSION" ] || { echo "::error::Normalized tag $TAG does not match package version $PKG_VERSION"; exit 1; }
 
       - run: pip install build
       - run: python -m build
@@ -48,7 +49,10 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+        run: |
+          RAW="${GITHUB_REF#refs/tags/v}"
+          NORMALIZED=$(python -c "from packaging.version import Version; print(Version('$RAW'))")
+          echo "version=$NORMALIZED" >> "$GITHUB_OUTPUT"
 
       - name: Inject version into RPM spec
         run: sed -i "s/@@VERSION@@/${{ steps.version.outputs.version }}/g" packaging/rpm/pcp-pmda-unifi.spec
@@ -92,7 +96,10 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+        run: |
+          RAW="${GITHUB_REF#refs/tags/v}"
+          NORMALIZED=$(python -c "from packaging.version import Version; print(Version('$RAW'))")
+          echo "version=$NORMALIZED" >> "$GITHUB_OUTPUT"
 
       - name: Build man page
         run: |
