@@ -53,6 +53,11 @@ class PmdaConfig:
     global_settings: GlobalSettings
     controllers: Dict[str, ControllerConfig]
 
+    @property
+    def is_single_controller(self) -> bool:
+        """True when only one controller is configured — prefix can be omitted."""
+        return len(self.controllers) == 1
+
 
 # ---------------------------------------------------------------------------
 # Boolean parsing helper
