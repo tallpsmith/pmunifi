@@ -16,7 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # hatch-vcs needs full history for version
+          fetch-depth: 0
+          fetch-tags: true    # hatch-vcs needs full history for version
+          fetch-tags: true  # setuptools-scm needs tags to resolve version
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -41,6 +43,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - run: sudo apt-get update && sudo apt-get install -y rpm rpmlint pandoc
       - uses: actions/setup-python@v5
         with:
@@ -64,8 +67,9 @@ jobs:
         run: |
           mkdir -p ~/rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
           VERSION="${{ steps.version.outputs.version }}"
-          cp dist/pcp_pmda_unifi-${VERSION}.tar.gz \
-             ~/rpmbuild/SOURCES/pcp-pmda-unifi-${VERSION}.tar.gz
+          SDIST=$(ls dist/pcp_pmda_unifi-*.tar.gz)
+          echo "Found sdist: $SDIST"
+          cp "$SDIST" ~/rpmbuild/SOURCES/pcp-pmda-unifi-${VERSION}.tar.gz
           cp packaging/rpm/pcp-pmda-unifi.spec ~/rpmbuild/SPECS/
 
       - name: Build man page
@@ -88,6 +92,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
       - run: |
           sudo apt-get update
           sudo apt-get install -y devscripts debhelper dh-python python3-all \
