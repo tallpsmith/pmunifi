@@ -157,7 +157,7 @@ sites_json=$($python -m pcp_pmda_unifi.install_helper \
     --url "$controller_url" \
     --api-key "$api_key" \
     --is-udm "$is_udm" \
-    --verify-ssl "$verify_ssl" 2>&1)
+    --verify-ssl "$verify_ssl")
 status=$?
 
 if [ $status -ne 0 ]; then

@@ -16,9 +16,11 @@ import argparse
 import json
 import os
 import sys
+import warnings
 from typing import Dict, List, Optional, Tuple
 
 import requests.exceptions
+import urllib3
 
 from pcp_pmda_unifi.collector import (
     UnifiAuthenticationError,
@@ -220,6 +222,9 @@ def main() -> None:
 
     is_udm = args.is_udm.lower() in ("true", "yes", "1")
     verify_ssl = args.verify_ssl.lower() in ("true", "yes", "1")
+
+    if not verify_ssl:
+        warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
     if args.validate:
         _handle_validate(args.url, args.api_key, is_udm, verify_ssl)
