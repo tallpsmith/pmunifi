@@ -1,5 +1,5 @@
 Name:           pcp-pmda-unifi
-Version:        0.1.0
+Version:        @@VERSION@@
 Release:        1%{?dist}
 Summary:        PCP PMDA for UniFi network monitoring
 License:        GPL-2.0-or-later
@@ -77,5 +77,5 @@ exit 0
 %{_mandir}/man1/pmdaunifi.1*
 
 %changelog
-* Sun Mar 16 2026 pmdaunifi contributors - 0.1.0-1
+* Sun Mar 16 2026 pmdaunifi contributors - @@VERSION@@-1
 - Initial package
