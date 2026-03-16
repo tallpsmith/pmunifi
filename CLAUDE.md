@@ -28,4 +28,18 @@ Python 3.8+ (must support RHEL 9 / Ubuntu 20.04 LTS system Python): Follow stand
 - 001-unifi-pmda: Added Python 3.8+ (must support RHEL 9 / Ubuntu 20.04 LTS system Python) + `requests` (pip), `pcp.pmda` + `cpmda` (system package)
 
 <!-- MANUAL ADDITIONS START -->
+
+## CI Monitoring
+
+After every `git push` (to any branch or PR), launch a background agent to monitor
+the GitHub Actions CI run. The agent should:
+
+1. Use `gh run list --branch <branch> --limit 1` to find the triggered run
+2. Poll with `gh run watch <run-id> --exit-status` (or periodic `gh run view`) until completion
+3. If the run **fails**, immediately notify with the failing job name(s) and relevant log output (`gh run view --log-failed`)
+4. If the run **passes**, confirm briefly
+
+This ensures build failures are caught and addressed without the user having to
+manually check GitHub Actions.
+
 <!-- MANUAL ADDITIONS END -->
