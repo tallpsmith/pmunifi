@@ -8,13 +8,12 @@ thread, so snapshots are always available when PMCD connects.
 """
 
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from pcp_pmda_unifi.poller import ControllerPoller
 from pcp_pmda_unifi.snapshot import Snapshot
-
 
 # ---------------------------------------------------------------------------
 # Helpers
