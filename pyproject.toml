@@ -35,7 +35,7 @@ unifi2dot = "pcp_pmda_unifi.cli:main"
 pcp-pmda-unifi-setup = "pcp_pmda_unifi.setup:main"
 
 [project.optional-dependencies]
-test = ["pytest>=7.0", "pytest-cov", "flask", "cryptography"]
+test = ["pytest>=7.0", "pytest-cov", "pytest-ordering", "flask", "cryptography"]
 dev = ["ruff", "mypy", "build", "twine", "hatch-vcs"]
 
 [tool.hatch.version]
@@ -60,6 +60,7 @@ markers = [
     "unit: fast isolated tests",
     "integration: tests requiring PCP bindings and mock HTTP",
     "e2e: end-to-end tests requiring PCP installation",
+    "order: control test execution order (pytest-ordering)",
 ]
 
 [tool.ruff]
