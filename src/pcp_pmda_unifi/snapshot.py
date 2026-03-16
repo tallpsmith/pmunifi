@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional
 
 from pcp_pmda_unifi.collector import normalise_mac
 
-
 # ---------------------------------------------------------------------------
 # DPI category name lookup (UniFi numeric cat → human-readable)
 # ---------------------------------------------------------------------------

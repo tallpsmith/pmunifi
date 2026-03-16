@@ -13,7 +13,6 @@ import sys
 import threading
 
 import pytest
-from flask import Flask
 
 from tests.integration.mock_controller import create_mock_app
 

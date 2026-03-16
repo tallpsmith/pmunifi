@@ -1,15 +1,15 @@
 # Developer Guide
 
 This page covers development setup and workflow. For the full contribution
-guide, see [CONTRIBUTING.md](https://github.com/you/pcp-pmda-unifi/blob/main/CONTRIBUTING.md)
+guide, see [CONTRIBUTING.md](https://github.com/tallpsmith/pmunifi/blob/main/CONTRIBUTING.md)
 in the repository root.
 
 ## Quick Start
 
 ```bash
-brew install just
-git clone https://github.com/you/pcp-pmda-unifi.git
-cd pcp-pmda-unifi
+brew install just uv
+git clone https://github.com/tallpsmith/pmunifi.git
+cd pmunifi
 just setup
 just test
 ```

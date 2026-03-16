@@ -7,13 +7,12 @@ snapshot access to the PMDA dispatch thread.
 
 import threading
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from pcp_pmda_unifi.poller import ControllerPoller
 from pcp_pmda_unifi.snapshot import Snapshot
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -376,7 +375,9 @@ class TestMultiControllerPoller:
     def test_independent_poll_intervals(self):
         """Each poller can have its own poll interval."""
         hq = ControllerPoller("hq", _make_mock_client(), sites=["default"], poll_interval=30)
-        branch = ControllerPoller("branch", _make_mock_client(), sites=["default"], poll_interval=60)
+        branch = ControllerPoller(
+            "branch", _make_mock_client(), sites=["default"], poll_interval=60,
+        )
         assert hq.poll_interval == 30
         assert branch.poll_interval == 60
 

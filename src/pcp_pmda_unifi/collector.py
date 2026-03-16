@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests
 
-
 # ---------------------------------------------------------------------------
 # Custom exceptions — one per HTTP error category
 # ---------------------------------------------------------------------------

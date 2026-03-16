@@ -13,7 +13,7 @@ import argparse
 import sys
 from typing import Optional, Sequence
 
-from pcp_pmda_unifi.collector import UnifiClient, UnifiApiError, UnifiConnectionError
+from pcp_pmda_unifi.collector import UnifiApiError, UnifiClient, UnifiConnectionError
 from pcp_pmda_unifi.topology import discover_topology, to_dot, to_json
 
 
@@ -85,10 +85,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         devices, controller=args.controller, site=args.site,
     )
 
-    if args.format == "json":
-        output = to_json(links, devices)
-    else:
-        output = to_dot(links, devices)
+    output = to_json(links, devices) if args.format == "json" else to_dot(links, devices)
 
     if args.output:
         with open(args.output, "w") as fh:

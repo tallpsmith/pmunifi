@@ -3,13 +3,14 @@ Version:        0.1.0
 Release:        1%{?dist}
 Summary:        PCP PMDA for UniFi network monitoring
 License:        GPL-2.0-or-later
-URL:            https://github.com/pmdaunifi/pcp-pmda-unifi
+URL:            https://github.com/tallpsmith/pmunifi
 Source0:        %{name}-%{version}.tar.gz
 
 BuildArch:      noarch
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 BuildRequires:  pcp-devel
+BuildRequires:  pandoc
 
 Requires:       pcp
 Requires:       python3-pcp
@@ -30,6 +31,10 @@ through the standard PCP toolchain.
 
 %install
 %py3_install
+
+# Build and install man page
+install -d %{buildroot}%{_mandir}/man1
+pandoc man/pmdaunifi.1.md -s -t man -o %{buildroot}%{_mandir}/man1/pmdaunifi.1
 
 # Create PMDA directory structure
 install -d %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi
@@ -69,6 +74,7 @@ exit 0
 %{_localstatedir}/lib/pcp/pmdas/unifi/unifi.conf.sample
 %{_bindir}/unifi2dot
 %{_bindir}/pcp-pmda-unifi-setup
+%{_mandir}/man1/pmdaunifi.1*
 
 %changelog
 * Sun Mar 16 2026 pmdaunifi contributors - 0.1.0-1

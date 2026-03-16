@@ -17,10 +17,8 @@ import argparse
 import json
 import math
 import random
-import sys
 import time
 from typing import Any, Dict, List
-
 
 # ---------------------------------------------------------------------------
 # Metric namespace — mirrors pmda.py cluster layout
@@ -283,8 +281,8 @@ def _try_write_pcp_archive(
     Returns True if successful, False if PCP LogImport is unavailable.
     """
     try:
-        from pcp import pmi  # LogImport
-        import cpmapi as c_api
+        import cpmapi as c_api  # noqa: F401
+        from pcp import pmi  # noqa: F401  # LogImport
     except ImportError:
         return False
 

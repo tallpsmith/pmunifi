@@ -1,6 +1,7 @@
 site_name: pcp-pmda-unifi
 site_description: UniFi network infrastructure PMDA for Performance Co-Pilot
-repo_url: https://github.com/you/pcp-pmda-unifi
+repo_url: https://github.com/tallpsmith/pmunifi
+docs_dir: .
 
 theme:
   name: material

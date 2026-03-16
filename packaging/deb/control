@@ -8,7 +8,7 @@ Build-Depends: debhelper-compat (= 13),
                python3-setuptools,
                pcp
 Standards-Version: 4.6.2
-Homepage: https://github.com/pmdaunifi/pcp-pmda-unifi
+Homepage: https://github.com/tallpsmith/pmunifi
 Rules-Requires-Root: no
 
 Package: pcp-pmda-unifi

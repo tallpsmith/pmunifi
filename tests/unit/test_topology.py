@@ -6,10 +6,7 @@ to_dot(), and to_json() before the implementation exists.
 
 import json
 
-import pytest
-
-from pcp_pmda_unifi.topology import TopologyLink, discover_topology, to_dot, to_json
-
+from pcp_pmda_unifi.topology import discover_topology, to_dot, to_json
 
 # ---------------------------------------------------------------------------
 # Shared fixtures

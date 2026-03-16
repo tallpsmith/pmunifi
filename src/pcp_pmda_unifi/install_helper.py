@@ -26,7 +26,6 @@ from pcp_pmda_unifi.collector import (
     UnifiConnectionError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Connectivity validation
 # ---------------------------------------------------------------------------
@@ -48,7 +47,7 @@ def validate_controller_connectivity(
     try:
         sysinfo = client.fetch_sysinfo("default")
         version = sysinfo[0].get("version", "unknown") if sysinfo else "unknown"
-        return True, "Connected. Controller version: {}".format(version)
+        return True, f"Connected. Controller version: {version}"
     except UnifiAuthenticationError:
         return False, "Authentication failed. Check your API key and permissions."
     except requests.exceptions.SSLError:
@@ -58,9 +57,9 @@ def validate_controller_connectivity(
             "set verify_ssl=false."
         )
     except UnifiConnectionError as exc:
-        return False, "Connection failed: {}".format(exc)
+        return False, f"Connection failed: {exc}"
     except Exception as exc:
-        return False, "Unexpected error: {}".format(exc)
+        return False, f"Unexpected error: {exc}"
 
 
 # ---------------------------------------------------------------------------
@@ -105,17 +104,17 @@ def generate_config(
 
     lines = [
         "[global]",
-        "poll_interval = {}".format(poll_interval),
+        f"poll_interval = {poll_interval}",
         "max_clients = 1000",
         "grace_period = 300",
         "enable_dpi = false",
         "",
-        "[controller:{}]".format(controller_name),
-        "url = {}".format(url),
-        "api_key = {}".format(api_key),
-        "sites = {}".format(sites_value),
-        "is_udm = {}".format(str(is_udm).lower()),
-        "verify_ssl = {}".format(str(verify_ssl).lower()),
+        f"[controller:{controller_name}]",
+        f"url = {url}",
+        f"api_key = {api_key}",
+        f"sites = {sites_value}",
+        f"is_udm = {str(is_udm).lower()}",
+        f"verify_ssl = {str(verify_ssl).lower()}",
         "",
     ]
     return "\n".join(lines)
@@ -243,7 +242,7 @@ def _handle_discover(url: str, api_key: str, is_udm: bool, verify_ssl: bool) -> 
         sites = discover_sites(url, api_key, is_udm, verify_ssl)
         print(json.dumps(sites))
     except Exception as exc:
-        print("Error discovering sites: {}".format(exc), file=sys.stderr)
+        print(f"Error discovering sites: {exc}", file=sys.stderr)
         sys.exit(1)
 
 

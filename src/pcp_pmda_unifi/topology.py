@@ -10,12 +10,11 @@ standalone library used by the unifi2dot CLI.
 """
 
 import json
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Dict, List
 
 from pcp_pmda_unifi.collector import normalise_mac
 from pcp_pmda_unifi.instances import switch_port_instance_name
-
 
 # ---------------------------------------------------------------------------
 # Data structures

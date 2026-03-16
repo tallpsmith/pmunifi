@@ -9,9 +9,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install ruff mypy
-      - run: ruff check src/ tests/
-      - run: mypy src/pcp_pmda_unifi/ --ignore-missing-imports
+      - uses: astral-sh/setup-uv@v4
+      - run: uvx ruff check src/ tests/
+      - run: |
+          uv pip install --system mypy
+          mypy src/pcp_pmda_unifi/ --ignore-missing-imports
 
   unit:
     runs-on: ubuntu-latest
@@ -20,8 +22,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[test]" --no-deps || pip install pytest pytest-cov requests flask
-      - run: pip install -e . --no-deps || true
+      - uses: astral-sh/setup-uv@v4
+      - run: uv pip install --system pytest pytest-cov requests flask
+      - run: uv pip install --system -e . --no-deps
       - run: pytest tests/unit/ -m unit --cov=pcp_pmda_unifi --cov-report=xml -v
       - uses: codecov/codecov-action@v4
         if: always()
@@ -34,7 +37,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[test]"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv pip install --system -e ".[test]"
       - run: pytest tests/integration/ -m integration -v
 
   e2e:
@@ -42,9 +46,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp
-      - run: sudo systemctl start pmcd && pmcd_wait -t 10
+      - run: |
+          sudo systemctl start pmcd
+          /usr/libexec/pcp/bin/pmcd_wait -t 10
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e ".[test]"
+      - uses: astral-sh/setup-uv@v4
+      - run: uv pip install --system -e ".[test]"
       - run: pytest tests/e2e/ -m e2e -v

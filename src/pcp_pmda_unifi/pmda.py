@@ -41,7 +41,6 @@ from pcp_pmda_unifi.snapshot import (
     PortData,
     RadioData,
     SiteData,
-    Snapshot,
 )
 
 # ---------------------------------------------------------------------------
@@ -49,10 +48,9 @@ from pcp_pmda_unifi.snapshot import (
 # ---------------------------------------------------------------------------
 
 try:
-    from pcp.pmda import PMDA, pmdaIndom, pmdaInstid, pmdaMetric
-    from pcp import pmapi
-    from cpmda import PMDA_FETCH_NOVALUES
     import cpmapi as c_api
+    from pcp import pmapi
+    from pcp.pmda import PMDA, pmdaIndom, pmdaInstid, pmdaMetric
     HAS_PCP = True
 except ImportError:
     HAS_PCP = False
@@ -97,149 +95,168 @@ CLUSTER_CONTROLLER = 9
 if HAS_PCP:
     # -- Cluster 0: site metrics (indom: site) --------------------------------
     SITE_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.site.status",           0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "status"),
-        ("unifi.site.num_sta",          1,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_sta"),
-        ("unifi.site.num_user",         2,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_user"),
-        ("unifi.site.num_guest",        3,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_guest"),
-        ("unifi.site.num_ap",           4,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_ap"),
-        ("unifi.site.num_sw",           5,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_sw"),
-        ("unifi.site.num_gw",           6,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_gw"),
+        ("unifi.site.status", 0, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "status"),
+        ("unifi.site.num_sta", 1, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_sta"),
+        ("unifi.site.num_user", 2, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_user"),
+        ("unifi.site.num_guest", 3, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_guest"),
+        ("unifi.site.num_ap", 4, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_ap"),
+        ("unifi.site.num_sw", 5, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_sw"),
+        ("unifi.site.num_gw", 6, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_gw"),
         # WAN/LAN/WLAN byte counters — sourced from gateway device's wan1/lan
         # interfaces for the site.  PM_SEM_COUNTER with raw gateway counters
         # per constitution ("export raw counter values only").
-        ("unifi.site.wan.rx_bytes",     7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_rx_bytes"),
-        ("unifi.site.wan.tx_bytes",     8,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_tx_bytes"),
-        ("unifi.site.lan.rx_bytes",     9,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "lan_rx_bytes"),
-        ("unifi.site.lan.tx_bytes",     10, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "lan_tx_bytes"),
-        ("unifi.site.lan.num_user",     11, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "lan_num_user"),
-        ("unifi.site.lan.num_guest",    12, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "lan_num_guest"),
-        ("unifi.site.wlan.rx_bytes",    13, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wlan_rx_bytes"),
-        ("unifi.site.wlan.tx_bytes",    14, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wlan_tx_bytes"),
+        ("unifi.site.wan.rx_bytes", 7, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_rx_bytes"),
+        ("unifi.site.wan.tx_bytes", 8, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_tx_bytes"),
+        ("unifi.site.lan.rx_bytes", 9, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "lan_rx_bytes"),
+        ("unifi.site.lan.tx_bytes", 10, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "lan_tx_bytes"),
+        ("unifi.site.lan.num_user", 11, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "lan_num_user"),
+        ("unifi.site.lan.num_guest", 12, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "lan_num_guest"),
+        ("unifi.site.wlan.rx_bytes", 13, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wlan_rx_bytes"),
+        ("unifi.site.wlan.tx_bytes", 14, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wlan_tx_bytes"),
     ]
 
     # -- Cluster 1: device metrics (indom: device) ----------------------------
     DEVICE_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.device.name",           0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "name"),
-        ("unifi.device.mac",            1,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "mac"),
-        ("unifi.device.ip",             2,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "ip"),
-        ("unifi.device.model",          3,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "model"),
-        ("unifi.device.type",           4,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "device_type"),
-        ("unifi.device.version",        5,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "version"),
-        ("unifi.device.state",          6,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "state"),
-        ("unifi.device.uptime",         7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "uptime"),
-        ("unifi.device.adopted",        8,  c_api.PM_TYPE_U32,    c_api.PM_SEM_DISCRETE, "adopted"),
-        ("unifi.device.rx_bytes",       9,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_bytes"),
-        ("unifi.device.tx_bytes",       10, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_bytes"),
-        ("unifi.device.temperature",    11, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "temperature"),
-        ("unifi.device.user_num_sta",   12, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "user_num_sta"),
-        ("unifi.device.guest_num_sta",  13, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "guest_num_sta"),
-        ("unifi.device.num_ports",      14, c_api.PM_TYPE_U32,    c_api.PM_SEM_DISCRETE, "num_ports"),
+        ("unifi.device.name", 0, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "name"),
+        ("unifi.device.mac", 1, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "mac"),
+        ("unifi.device.ip", 2, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "ip"),
+        ("unifi.device.model", 3, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "model"),
+        ("unifi.device.type", 4, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "device_type"),
+        ("unifi.device.version", 5, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "version"),
+        ("unifi.device.state", 6, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "state"),
+        ("unifi.device.uptime", 7, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "uptime"),
+        ("unifi.device.adopted", 8, c_api.PM_TYPE_U32, c_api.PM_SEM_DISCRETE, "adopted"),
+        ("unifi.device.rx_bytes", 9, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.device.tx_bytes", 10, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+        ("unifi.device.temperature", 11, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "temperature"),
+        ("unifi.device.user_num_sta", 12, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "user_num_sta"),
+        ("unifi.device.guest_num_sta", 13,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "guest_num_sta"),
+        ("unifi.device.num_ports", 14, c_api.PM_TYPE_U32, c_api.PM_SEM_DISCRETE, "num_ports"),
     ]
 
     # -- Cluster 2: switch port metrics (indom: switch_port) ------------------
     SWITCH_PORT_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.switch.port.rx_bytes",      0,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
-        ("unifi.switch.port.tx_bytes",      1,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
-        ("unifi.switch.port.rx_packets",    2,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_packets"),
-        ("unifi.switch.port.tx_packets",    3,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_packets"),
-        ("unifi.switch.port.rx_errors",     4,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_errors"),
-        ("unifi.switch.port.tx_errors",     5,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_errors"),
-        ("unifi.switch.port.rx_dropped",    6,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_dropped"),
-        ("unifi.switch.port.tx_dropped",    7,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_dropped"),
-        ("unifi.switch.port.rx_broadcast",  8,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_broadcast"),
-        ("unifi.switch.port.tx_broadcast",  9,  c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_broadcast"),
-        ("unifi.switch.port.rx_multicast",  10, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_multicast"),
-        ("unifi.switch.port.tx_multicast",  11, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_multicast"),
-        ("unifi.switch.port.up",            12, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "up"),
-        ("unifi.switch.port.enable",        13, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "enable"),
-        ("unifi.switch.port.speed",         14, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "speed"),
-        ("unifi.switch.port.full_duplex",   15, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "full_duplex"),
-        ("unifi.switch.port.is_uplink",     16, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "is_uplink"),
-        ("unifi.switch.port.satisfaction",  17, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "satisfaction"),
-        ("unifi.switch.port.mac_count",     18, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "mac_count"),
+        ("unifi.switch.port.rx_bytes", 0, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.switch.port.tx_bytes", 1, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+        ("unifi.switch.port.rx_packets", 2, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_packets"),
+        ("unifi.switch.port.tx_packets", 3, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_packets"),
+        ("unifi.switch.port.rx_errors", 4, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_errors"),
+        ("unifi.switch.port.tx_errors", 5, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_errors"),
+        ("unifi.switch.port.rx_dropped", 6, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_dropped"),
+        ("unifi.switch.port.tx_dropped", 7, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_dropped"),
+        ("unifi.switch.port.rx_broadcast", 8,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_broadcast"),
+        ("unifi.switch.port.tx_broadcast", 9,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_broadcast"),
+        ("unifi.switch.port.rx_multicast", 10,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_multicast"),
+        ("unifi.switch.port.tx_multicast", 11,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_multicast"),
+        ("unifi.switch.port.up", 12, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "up"),
+        ("unifi.switch.port.enable", 13, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "enable"),
+        ("unifi.switch.port.speed", 14, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "speed"),
+        ("unifi.switch.port.full_duplex", 15,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "full_duplex"),
+        ("unifi.switch.port.is_uplink", 16, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "is_uplink"),
+        ("unifi.switch.port.satisfaction", 17,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "satisfaction"),
+        ("unifi.switch.port.mac_count", 18, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "mac_count"),
     ]
 
     # -- Cluster 3: PoE metrics (indom: switch_port — same as cluster 2) ------
     POE_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.switch.port.poe.enable",   0,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT, "poe_enable"),
-        ("unifi.switch.port.poe.good",     1,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT, "poe_good"),
-        ("unifi.switch.port.poe.power",    2,  c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT, "poe_power"),
-        ("unifi.switch.port.poe.voltage",  3,  c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT, "poe_voltage"),
-        ("unifi.switch.port.poe.current",  4,  c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT, "poe_current"),
-        ("unifi.switch.port.poe.class",    5,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "poe_class"),
+        ("unifi.switch.port.poe.enable", 0, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "poe_enable"),
+        ("unifi.switch.port.poe.good", 1, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "poe_good"),
+        ("unifi.switch.port.poe.power", 2, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "poe_power"),
+        ("unifi.switch.port.poe.voltage", 3,
+         c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "poe_voltage"),
+        ("unifi.switch.port.poe.current", 4,
+         c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "poe_current"),
+        ("unifi.switch.port.poe.class", 5, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "poe_class"),
     ]
 
     # -- Cluster 5: AP radio metrics (indom: ap_radio) ----------------------
     AP_RADIO_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.ap.channel",       0,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "channel"),
-        ("unifi.ap.radio_type",    1,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "radio_type"),
-        ("unifi.ap.rx_bytes",      2,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_bytes"),
-        ("unifi.ap.tx_bytes",      3,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_bytes"),
-        ("unifi.ap.rx_packets",    4,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_packets"),
-        ("unifi.ap.tx_packets",    5,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_packets"),
-        ("unifi.ap.tx_dropped",    6,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_dropped"),
-        ("unifi.ap.tx_retries",    7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_retries"),
-        ("unifi.ap.num_sta",       8,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "num_sta"),
-        ("unifi.ap.satisfaction",  9,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "satisfaction"),
+        ("unifi.ap.channel", 0, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "channel"),
+        ("unifi.ap.radio_type", 1, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "radio_type"),
+        ("unifi.ap.rx_bytes", 2, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.ap.tx_bytes", 3, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+        ("unifi.ap.rx_packets", 4, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_packets"),
+        ("unifi.ap.tx_packets", 5, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_packets"),
+        ("unifi.ap.tx_dropped", 6, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_dropped"),
+        ("unifi.ap.tx_retries", 7, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_retries"),
+        ("unifi.ap.num_sta", 8, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "num_sta"),
+        ("unifi.ap.satisfaction", 9, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "satisfaction"),
     ]
 
     # -- Cluster 6: gateway metrics (indom: gateway) --------------------------
     GATEWAY_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.gateway.wan_ip",          0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "wan_ip"),
-        ("unifi.gateway.wan_rx_bytes",    1,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_rx_bytes"),
-        ("unifi.gateway.wan_tx_bytes",    2,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_tx_bytes"),
-        ("unifi.gateway.wan_rx_packets",  3,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_rx_packets"),
-        ("unifi.gateway.wan_tx_packets",  4,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_tx_packets"),
-        ("unifi.gateway.wan_rx_dropped",  5,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_rx_dropped"),
-        ("unifi.gateway.wan_tx_dropped",  6,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_tx_dropped"),
-        ("unifi.gateway.wan_rx_errors",   7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_rx_errors"),
-        ("unifi.gateway.wan_tx_errors",   8,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "wan_tx_errors"),
-        ("unifi.gateway.wan_up",          9,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "wan_up"),
-        ("unifi.gateway.wan_speed",       10, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "wan_speed"),
-        ("unifi.gateway.wan_latency",     11, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "wan_latency"),
-        ("unifi.gateway.lan_rx_bytes",    12, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "lan_rx_bytes"),
-        ("unifi.gateway.lan_tx_bytes",    13, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "lan_tx_bytes"),
-        ("unifi.gateway.uptime",          14, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "uptime"),
-        ("unifi.gateway.cpu",             15, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "cpu"),
-        ("unifi.gateway.mem",             16, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "mem"),
-        ("unifi.gateway.temperature",     17, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "temperature"),
+        ("unifi.gateway.wan_ip", 0, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "wan_ip"),
+        ("unifi.gateway.wan_rx_bytes", 1, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_rx_bytes"),
+        ("unifi.gateway.wan_tx_bytes", 2, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_tx_bytes"),
+        ("unifi.gateway.wan_rx_packets", 3,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_rx_packets"),
+        ("unifi.gateway.wan_tx_packets", 4,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_tx_packets"),
+        ("unifi.gateway.wan_rx_dropped", 5,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_rx_dropped"),
+        ("unifi.gateway.wan_tx_dropped", 6,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_tx_dropped"),
+        ("unifi.gateway.wan_rx_errors", 7,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_rx_errors"),
+        ("unifi.gateway.wan_tx_errors", 8,
+         c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "wan_tx_errors"),
+        ("unifi.gateway.wan_up", 9, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "wan_up"),
+        ("unifi.gateway.wan_speed", 10, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "wan_speed"),
+        ("unifi.gateway.wan_latency", 11, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "wan_latency"),
+        ("unifi.gateway.lan_rx_bytes", 12, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "lan_rx_bytes"),
+        ("unifi.gateway.lan_tx_bytes", 13, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "lan_tx_bytes"),
+        ("unifi.gateway.uptime", 14, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "uptime"),
+        ("unifi.gateway.cpu", 15, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "cpu"),
+        ("unifi.gateway.mem", 16, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "mem"),
+        ("unifi.gateway.temperature", 17, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "temperature"),
     ]
 
     # -- Cluster 8: DPI metrics (indom: dpi_category, opt-in FR-023) ----------
     DPI_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.dpi.rx_bytes",  0, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
-        ("unifi.dpi.tx_bytes",  1, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+        ("unifi.dpi.rx_bytes", 0, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.dpi.tx_bytes", 1, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
     ]
 
     # -- Cluster 4: client metrics (indom: client) ----------------------------
     CLIENT_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.client.hostname",       0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "hostname"),
-        ("unifi.client.ip",             1,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "ip"),
-        ("unifi.client.mac",            2,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "mac"),
-        ("unifi.client.oui",            3,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "oui"),
-        ("unifi.client.is_wired",       4,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "is_wired"),
-        ("unifi.client.sw_mac",         5,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "sw_mac"),
-        ("unifi.client.sw_port",        6,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "sw_port"),
-        ("unifi.client.rx_bytes",       7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_bytes"),
-        ("unifi.client.tx_bytes",       8,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_bytes"),
-        ("unifi.client.rx_packets",     9,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_packets"),
-        ("unifi.client.tx_packets",     10, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_packets"),
-        ("unifi.client.uptime",         11, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "uptime"),
-        ("unifi.client.signal",         12, c_api.PM_TYPE_32,     c_api.PM_SEM_INSTANT,  "signal"),
-        ("unifi.client.network",        13, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "network"),
-        ("unifi.client.last_seen",      14, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "last_seen"),
+        ("unifi.client.hostname", 0, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "hostname"),
+        ("unifi.client.ip", 1, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "ip"),
+        ("unifi.client.mac", 2, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "mac"),
+        ("unifi.client.oui", 3, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "oui"),
+        ("unifi.client.is_wired", 4, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "is_wired"),
+        ("unifi.client.sw_mac", 5, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "sw_mac"),
+        ("unifi.client.sw_port", 6, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "sw_port"),
+        ("unifi.client.rx_bytes", 7, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.client.tx_bytes", 8, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+        ("unifi.client.rx_packets", 9, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_packets"),
+        ("unifi.client.tx_packets", 10, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_packets"),
+        ("unifi.client.uptime", 11, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "uptime"),
+        ("unifi.client.signal", 12, c_api.PM_TYPE_32, c_api.PM_SEM_INSTANT, "signal"),
+        ("unifi.client.network", 13, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "network"),
+        ("unifi.client.last_seen", 14, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "last_seen"),
     ]
 
     # -- Cluster 9: controller metrics (indom: controller) --------------------
     CONTROLLER_METRICS: List[Tuple[str, int, int, int, str]] = [
-        ("unifi.controller.up",                 0, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "up"),
-        ("unifi.controller.poll_duration_ms",   1, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "poll_duration_ms"),
-        ("unifi.controller.poll_errors",        2, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "poll_errors"),
-        ("unifi.controller.last_poll",          3, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "last_poll"),
-        ("unifi.controller.version",            4, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "version"),
-        ("unifi.controller.devices_discovered", 5, c_api.PM_TYPE_U32,   c_api.PM_SEM_INSTANT,  "devices_discovered"),
-        ("unifi.controller.clients_discovered", 6, c_api.PM_TYPE_U32,   c_api.PM_SEM_INSTANT,  "clients_discovered"),
-        ("unifi.controller.sites_polled",       7, c_api.PM_TYPE_U32,   c_api.PM_SEM_INSTANT,  "sites_polled"),
+        ("unifi.controller.up", 0, c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "up"),
+        ("unifi.controller.poll_duration_ms", 1,
+         c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "poll_duration_ms"),
+        ("unifi.controller.poll_errors", 2, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "poll_errors"),
+        ("unifi.controller.last_poll", 3, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "last_poll"),
+        ("unifi.controller.version", 4, c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "version"),
+        ("unifi.controller.devices_discovered", 5,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "devices_discovered"),
+        ("unifi.controller.clients_discovered", 6,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "clients_discovered"),
+        ("unifi.controller.sites_polled", 7,
+         c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "sites_polled"),
     ]
 else:
     SITE_METRICS = []
@@ -447,7 +464,7 @@ if HAS_PCP:
         def _load_config(self, config_path: str) -> None:
             """Read the INI config file and start poller threads."""
             try:
-                with open(config_path, "r") as fh:
+                with open(config_path) as fh:
                     ini_content = fh.read()
                 self._config = parse_config(ini_content)
             except Exception:

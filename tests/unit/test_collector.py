@@ -6,20 +6,19 @@ Validates URL construction, auth headers, response envelope handling,
 error mapping, defensive parsing, and MAC normalisation.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 import requests as requests_lib
 
 from pcp_pmda_unifi.collector import (
-    UnifiClient,
     UnifiApiError,
     UnifiAuthenticationError,
+    UnifiClient,
     UnifiConnectionError,
     UnifiServerError,
     normalise_mac,
 )
-
 
 # ---------------------------------------------------------------------------
 # URL construction

@@ -11,9 +11,8 @@ default:
 # Create virtualenv and install everything
 # --system-site-packages gives access to PCP bindings installed by the OS package manager
 setup:
-    python3 -m venv --system-site-packages {{ venv_dir }}
-    {{ venv_dir }}/bin/pip install --upgrade pip
-    {{ venv_dir }}/bin/pip install -e ".[test,dev]"
+    uv venv --system-site-packages {{ venv_dir }}
+    uv pip install --python {{ python }} -e ".[test,dev]"
     @echo "\nReady. Run: just test"
 
 # Run tests
@@ -26,7 +25,7 @@ test-cov:
 
 # Lint and typecheck
 check:
-    {{ python }} -m ruff check src/ tests/
+    uvx ruff check src/ tests/
     {{ python }} -m mypy src/pcp_pmda_unifi/ --ignore-missing-imports
 
 # Clean build artifacts

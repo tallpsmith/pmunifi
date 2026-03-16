@@ -9,7 +9,6 @@ import pytest
 
 from pcp_pmda_unifi.snapshot import (
     ClientData,
-    DeviceData,
     GatewayData,
     PortData,
     RadioData,
@@ -364,6 +363,7 @@ class TestGracePeriodPruning:
     def test_unseen_instances_become_stale_after_grace_period(self):
         """Instances not updated beyond the grace period are pruned."""
         import time
+
         from pcp_pmda_unifi.instances import GracePeriodTracker
         tracker = GracePeriodTracker()
         # Manually backdate the last_seen timestamp
@@ -375,6 +375,7 @@ class TestGracePeriodPruning:
     def test_reappearing_instance_resets_timer(self):
         """An instance that reappears should no longer be stale."""
         import time
+
         from pcp_pmda_unifi.instances import GracePeriodTracker
         tracker = GracePeriodTracker()
         tracker.update_seen({"a"})
@@ -388,6 +389,7 @@ class TestGracePeriodPruning:
     def test_prune_removes_stale_from_tracking(self):
         """After pruning, stale entries should be removed from internal state."""
         import time
+
         from pcp_pmda_unifi.instances import GracePeriodTracker
         tracker = GracePeriodTracker()
         tracker.update_seen({"a", "b"})

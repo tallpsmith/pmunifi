@@ -11,8 +11,6 @@ Usage:
 import argparse
 import os
 import shutil
-import stat
-import sys
 from pathlib import Path
 
 # Python 3.8 compat: importlib.resources.files() arrived in 3.9
@@ -89,9 +87,9 @@ def _remove_pmdas_dir(target_dir: Path) -> None:
     """Remove the PMDA directory.  Leaves unifi.conf if it exists."""
     if target_dir.exists():
         shutil.rmtree(target_dir)
-        print("Removed {}".format(target_dir))
+        print(f"Removed {target_dir}")
     else:
-        print("Nothing to remove: {} does not exist".format(target_dir))
+        print(f"Nothing to remove: {target_dir} does not exist")
 
 
 # ---------------------------------------------------------------------------
@@ -128,10 +126,10 @@ def main() -> None:
 
 def _print_install_instructions(target: Path) -> None:
     """Tell the user what to do next after deploying files."""
-    print("PMDA files deployed to {}".format(target))
+    print(f"PMDA files deployed to {target}")
     print("")
     print("Next steps:")
-    print("  cd {}".format(target))
+    print(f"  cd {target}")
     print("  sudo ./Install")
     print("")
     print("For non-interactive install:")

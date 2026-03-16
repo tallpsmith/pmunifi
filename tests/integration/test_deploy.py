@@ -8,7 +8,6 @@ Tests cover:
 
 import os
 import stat
-import textwrap
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -18,7 +18,7 @@ import time
 from typing import Dict, List, Optional
 
 from pcp_pmda_unifi.collector import UnifiClient
-from pcp_pmda_unifi.snapshot import Snapshot, SiteData, build_snapshot_from_api
+from pcp_pmda_unifi.snapshot import SiteData, Snapshot, build_snapshot_from_api
 
 log = logging.getLogger(__name__)
 

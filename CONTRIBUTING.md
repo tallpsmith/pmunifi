@@ -3,17 +3,18 @@
 ## Quick Start
 
 ```bash
-brew install just          # or: apt install just / cargo install just
-git clone https://github.com/you/pcp-pmda-unifi.git
-cd pcp-pmda-unifi
+brew install just uv       # or: apt install just && curl -LsSf https://astral.sh/uv/install.sh | sh
+git clone https://github.com/tallpsmith/pmunifi.git
+cd pmunifi
 just setup
 just test
 ```
 
-`just setup` creates a virtualenv with `--system-site-packages` so the PCP
-Python bindings (`pcp.pmda`, `cpmda`, `cpmapi`) installed by your OS package
-manager are visible inside the venv.  If you don't have PCP installed locally,
-unit tests still pass — the PMDA module gracefully stubs out PCP imports.
+`just setup` uses [uv](https://docs.astral.sh/uv/) to create a virtualenv
+with `--system-site-packages` so the PCP Python bindings (`pcp.pmda`,
+`cpmda`, `cpmapi`) installed by your OS package manager are visible inside
+the venv.  If you don't have PCP installed locally, unit tests still pass —
+the PMDA module gracefully stubs out PCP imports.
 
 ## Repo Structure
 

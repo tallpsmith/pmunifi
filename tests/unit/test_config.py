@@ -5,12 +5,10 @@ Validates INI parsing, defaults, validation rules, env var overrides,
 and controller NAME constraints per the configuration contract.
 """
 
-import os
 
 import pytest
 
 from pcp_pmda_unifi.config import parse_config
-
 
 # ---------------------------------------------------------------------------
 # Happy-path parsing

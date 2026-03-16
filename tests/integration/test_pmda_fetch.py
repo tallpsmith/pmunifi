@@ -9,8 +9,8 @@ import pytest
 
 try:
     from pcp_pmda_unifi.pmda import (
-        HAS_PCP,
         CONTROLLER_METRICS,
+        HAS_PCP,
         SWITCH_PORT_METRICS,
     )
 except ImportError:

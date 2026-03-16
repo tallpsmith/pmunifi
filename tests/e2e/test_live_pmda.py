@@ -8,8 +8,6 @@ root and a live PMCD.
 Marked @pytest.mark.e2e so the normal `pytest -m "not e2e"` run skips them.
 """
 
-import configparser
-import io
 import textwrap
 
 import pytest
