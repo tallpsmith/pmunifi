@@ -173,11 +173,11 @@ class UnifiClient:
 
     # -- SSL parameter helper -------------------------------------------------
 
-    def _ssl_kwargs(self) -> Dict[str, Union[bool, str]]:
-        """Build the verify= kwarg for requests calls."""
+    def _verify_value(self) -> Union[bool, str]:
+        """Return the verify= value for requests calls."""
         if self.ca_cert:
-            return {"verify": self.ca_cert}
-        return {"verify": self.verify_ssl}
+            return self.ca_cert
+        return self.verify_ssl
 
     # -- Low-level request wrapper --------------------------------------------
 
@@ -185,7 +185,7 @@ class UnifiClient:
         """Perform a GET request and return the parsed data array."""
         url = self._build_url(path)
         try:
-            response = self.session.get(url, **self._ssl_kwargs())
+            response = self.session.get(url, verify=self._verify_value())
         except requests.ConnectionError as exc:
             raise UnifiConnectionError(
                 f"Connection failed to {url}: {exc}",
@@ -197,7 +197,7 @@ class UnifiClient:
         """Perform a POST request and return the parsed data array."""
         url = self._build_url(path)
         try:
-            response = self.session.post(url, json=json_body, **self._ssl_kwargs())
+            response = self.session.post(url, json=json_body, verify=self._verify_value())
         except requests.ConnectionError as exc:
             raise UnifiConnectionError(
                 f"Connection failed to {url}: {exc}",
