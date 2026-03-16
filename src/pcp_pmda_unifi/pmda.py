@@ -505,6 +505,7 @@ if HAS_PCP:
                     max_clients=global_settings.max_clients,
                     enable_dpi=global_settings.enable_dpi,
                 )
+                poller.run_initial_poll()
                 poller.start()
                 self._pollers.append(poller)
                 log.info(
