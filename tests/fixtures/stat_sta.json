@@ -1,0 +1,52 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "mac": "aa:bb:cc:dd:ee:01",
+      "hostname": "laptop-alice",
+      "ip": "192.168.1.100",
+      "oui": "Apple",
+      "is_wired": true,
+      "sw_mac": "fc:ec:da:01:02:03",
+      "sw_port": 1,
+      "rx_bytes": 500000,
+      "tx_bytes": 300000,
+      "rx_packets": 5000,
+      "tx_packets": 3000,
+      "uptime": 7200,
+      "last_seen": 1742083200,
+      "network": "LAN"
+    },
+    {
+      "mac": "aa:bb:cc:dd:ee:02",
+      "hostname": "phone-bob",
+      "ip": "192.168.1.101",
+      "oui": "Samsung",
+      "is_wired": false,
+      "signal": -62,
+      "rx_bytes": 100000,
+      "tx_bytes": 50000,
+      "rx_packets": 1000,
+      "tx_packets": 500,
+      "uptime": 3600,
+      "last_seen": 1742083200,
+      "network": "WLAN"
+    },
+    {
+      "mac": "aa:bb:cc:dd:ee:03",
+      "hostname": "",
+      "ip": "192.168.1.102",
+      "oui": "Unknown",
+      "is_wired": true,
+      "sw_mac": "fc:ec:da:01:02:03",
+      "sw_port": 1,
+      "rx_bytes": 200,
+      "tx_bytes": 100,
+      "rx_packets": 10,
+      "tx_packets": 5,
+      "uptime": 60,
+      "last_seen": 1742083200,
+      "network": "LAN"
+    }
+  ]
+}
