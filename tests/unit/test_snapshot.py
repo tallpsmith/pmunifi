@@ -243,3 +243,64 @@ class TestDefaults:
         snap = _build([{"mac": "aa:bb:cc:00:00:01", "type": "usw"}])
         device = list(snap.sites["default"].devices.values())[0]
         assert device.gateway is None
+
+
+# ---------------------------------------------------------------------------
+# T033: Grace period pruning
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestGracePeriodPruning:
+    """GracePeriodTracker removes stale instances after the grace window."""
+
+    def test_tracker_importable(self):
+        """GracePeriodTracker must be importable from instances module."""
+        from pcp_pmda_unifi.instances import GracePeriodTracker
+        tracker = GracePeriodTracker()
+        assert tracker is not None
+
+    def test_new_instances_are_not_stale(self):
+        """Freshly seen instances should not appear in the stale set."""
+        from pcp_pmda_unifi.instances import GracePeriodTracker
+        tracker = GracePeriodTracker()
+        tracker.update_seen({"a", "b", "c"})
+        stale = tracker.get_stale(grace_period_seconds=300)
+        assert stale == set()
+
+    def test_unseen_instances_become_stale_after_grace_period(self):
+        """Instances not updated beyond the grace period are pruned."""
+        import time
+        from pcp_pmda_unifi.instances import GracePeriodTracker
+        tracker = GracePeriodTracker()
+        # Manually backdate the last_seen timestamp
+        tracker.update_seen({"a", "b"})
+        tracker._last_seen["a"] = time.monotonic() - 600  # 10 min ago
+        stale = tracker.get_stale(grace_period_seconds=300)
+        assert stale == {"a"}
+
+    def test_reappearing_instance_resets_timer(self):
+        """An instance that reappears should no longer be stale."""
+        import time
+        from pcp_pmda_unifi.instances import GracePeriodTracker
+        tracker = GracePeriodTracker()
+        tracker.update_seen({"a"})
+        tracker._last_seen["a"] = time.monotonic() - 600
+        # Confirm it's stale
+        assert "a" in tracker.get_stale(grace_period_seconds=300)
+        # Now it reappears
+        tracker.update_seen({"a"})
+        assert "a" not in tracker.get_stale(grace_period_seconds=300)
+
+    def test_prune_removes_stale_from_tracking(self):
+        """After pruning, stale entries should be removed from internal state."""
+        import time
+        from pcp_pmda_unifi.instances import GracePeriodTracker
+        tracker = GracePeriodTracker()
+        tracker.update_seen({"a", "b"})
+        tracker._last_seen["a"] = time.monotonic() - 600
+        stale = tracker.get_stale(grace_period_seconds=300)
+        tracker.prune(stale)
+        # "a" should no longer be tracked at all
+        assert "a" not in tracker._last_seen
+        assert "b" in tracker._last_seen

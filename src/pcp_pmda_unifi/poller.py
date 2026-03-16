@@ -64,11 +64,16 @@ class ControllerPoller(threading.Thread):
     @property
     def controller_health(self) -> Dict:
         """Return a status dict for controller health metrics (cluster 9)."""
+        snap = self._snapshot
         return {
             "up": 1 if self._controller_up else 0,
             "poll_duration_ms": self._poll_duration_ms,
             "poll_errors": self._poll_errors,
             "last_poll": int(self._last_poll_timestamp),
+            "version": snap.controller_version if snap else "",
+            "devices_discovered": snap.devices_discovered if snap else 0,
+            "clients_discovered": snap.clients_discovered if snap else 0,
+            "sites_polled": snap.sites_polled if snap else 0,
         }
 
     # -- Thread lifecycle -----------------------------------------------------

@@ -10,6 +10,8 @@ Naming convention:
 """
 
 import re
+import time
+from typing import Dict, Set
 
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
@@ -131,3 +133,39 @@ def dpi_category_instance_name(
     """Build instance name for a DPI category: 'controller/site/category_name'."""
     safe_category = sanitise_instance_name(category_name)
     return f"{controller}/{site}/{safe_category}"
+
+
+# ---------------------------------------------------------------------------
+# Grace period tracking (FR-017)
+# ---------------------------------------------------------------------------
+
+
+class GracePeriodTracker:
+    """Tracks instance last-seen times and identifies stale instances.
+
+    Disconnected devices/clients remain in instance domains until the
+    grace period expires, then are pruned.  This avoids instance churn
+    when a device briefly goes offline.
+    """
+
+    def __init__(self) -> None:
+        self._last_seen: Dict[str, float] = {}
+
+    def update_seen(self, instance_names: Set[str]) -> None:
+        """Mark all given instance names as seen right now."""
+        now = time.monotonic()
+        for name in instance_names:
+            self._last_seen[name] = now
+
+    def get_stale(self, grace_period_seconds: int) -> Set[str]:
+        """Return instance names not seen for longer than the grace period."""
+        cutoff = time.monotonic() - grace_period_seconds
+        return {
+            name for name, last in self._last_seen.items()
+            if last < cutoff
+        }
+
+    def prune(self, stale_names: Set[str]) -> None:
+        """Remove stale entries from internal tracking state."""
+        for name in stale_names:
+            self._last_seen.pop(name, None)
