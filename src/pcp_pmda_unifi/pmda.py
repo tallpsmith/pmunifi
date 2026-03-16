@@ -14,6 +14,7 @@ Usage (launched by PMCD):
 
 import json
 import logging
+import os
 import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -454,11 +455,18 @@ if HAS_PCP:
         # -- CLI and configuration -------------------------------------------
 
         def _configure_from_cli(self) -> None:
-            """Parse CLI options and load configuration file."""
+            """Connect to PMCD and load configuration file.
+
+            Follows the standard PCP Python PMDA pattern: derive the config
+            path from PCP_PMDAS_DIR rather than parsing CLI options, which
+            ensures portability across PCP versions and platforms (including
+            macOS where pmGetOptionRequired is not available).
+            """
             self.connect_pmcd()
 
-            config_file = self.pmGetOptionRequired("c")
-            if config_file:
+            pmdas_dir = pmapi.pmContext.pmGetConfig("PCP_PMDAS_DIR")
+            config_file = os.path.join(pmdas_dir, self.read_name(), "unifi.conf")
+            if os.path.exists(config_file):
                 self._load_config(config_file)
 
         def _load_config(self, config_path: str) -> None:

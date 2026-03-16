@@ -259,11 +259,23 @@ def _extract_port_data(raw_port: Dict[str, Any]) -> PortData:
     )
 
 
+def _safe_int(value: Any, default: int = 0) -> int:
+    """Convert a value to int, returning default if it's not numeric.
+
+    The UniFi API occasionally returns strings like 'auto' for fields
+    that are normally integers (e.g., radio channel in auto-select mode).
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
 def _extract_radio_data(raw_radio: Dict[str, Any]) -> RadioData:
     """Build a RadioData from a single radio_table entry."""
     return RadioData(
         radio_type=str(raw_radio.get("radio", "")),
-        channel=int(raw_radio.get("channel", 0)),
+        channel=_safe_int(raw_radio.get("channel", 0)),
         rx_bytes=int(raw_radio.get("rx_bytes", 0)),
         tx_bytes=int(raw_radio.get("tx_bytes", 0)),
         rx_packets=int(raw_radio.get("rx_packets", 0)),

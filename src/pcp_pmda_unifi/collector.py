@@ -10,9 +10,11 @@ Usage:
 """
 
 import re
+import warnings
 from typing import Any, Dict, List, Optional, Union
 
 import requests
+import urllib3
 
 # ---------------------------------------------------------------------------
 # Custom exceptions — one per HTTP error category
@@ -157,6 +159,9 @@ class UnifiClient:
         self.is_udm = is_udm
         self.verify_ssl = verify_ssl
         self.ca_cert = ca_cert
+
+        if not verify_ssl:
+            warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
 
         self.session = requests.Session()
         self.session.headers.update({
