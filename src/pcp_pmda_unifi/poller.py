@@ -80,6 +80,17 @@ class ControllerPoller(threading.Thread):
 
     # -- Thread lifecycle -----------------------------------------------------
 
+    def run_initial_poll(self) -> bool:
+        """Run the first poll synchronously on the calling thread.
+
+        Guarantees a snapshot exists before the background loop starts,
+        eliminating the startup race where PMCD fetches find empty indoms.
+        Returns True if the poll succeeded, False otherwise.
+        """
+        log.info("Running initial poll for controller '%s'", self.controller_name)
+        self.poll_once()
+        return self._snapshot is not None
+
     def run(self) -> None:
         """Main loop: poll immediately, then sleep between cycles."""
         log.info("Poller started for controller '%s'", self.controller_name)
