@@ -55,21 +55,21 @@ class TestDeployToPmdasDir:
 
     def test_generates_launcher_script(self, tmp_path):
         deploy_to_pmdas_dir(tmp_path)
-        launcher = tmp_path / "pmda_unifi.python"
+        launcher = tmp_path / "pmdaunifi.python"
         assert launcher.exists(), "Launcher script not generated"
 
     def test_launcher_has_pmpython_shebang(self, tmp_path):
         deploy_to_pmdas_dir(tmp_path)
-        launcher = tmp_path / "pmda_unifi.python"
+        launcher = tmp_path / "pmdaunifi.python"
         first_line = launcher.read_text().splitlines()[0]
         assert first_line == "#!/usr/bin/env pmpython"
 
     def test_launcher_imports_pmda(self, tmp_path):
         deploy_to_pmdas_dir(tmp_path)
-        launcher = tmp_path / "pmda_unifi.python"
+        launcher = tmp_path / "pmdaunifi.python"
         content = launcher.read_text()
-        assert "from pcp_pmda_unifi.pmda import UnifiPMDA" in content
-        assert "UnifiPMDA.pmda_main()" in content
+        assert "from pcp_pmda_unifi.pmda import run" in content
+        assert "run()" in content
 
     def test_install_script_is_executable(self, tmp_path):
         deploy_to_pmdas_dir(tmp_path)
@@ -83,7 +83,7 @@ class TestDeployToPmdasDir:
 
     def test_launcher_is_executable(self, tmp_path):
         deploy_to_pmdas_dir(tmp_path)
-        mode = (tmp_path / "pmda_unifi.python").stat().st_mode
+        mode = (tmp_path / "pmdaunifi.python").stat().st_mode
         assert mode & stat.S_IXUSR, "Launcher should be owner-executable"
 
 

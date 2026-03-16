@@ -26,8 +26,8 @@ except ImportError:
 
 LAUNCHER_SCRIPT = """\
 #!/usr/bin/env pmpython
-from pcp_pmda_unifi.pmda import UnifiPMDA
-UnifiPMDA.pmda_main()
+from pcp_pmda_unifi.pmda import run
+run()
 """
 
 DEPLOY_ARTIFACTS = ["Install", "Remove", "unifi.conf.sample"]
@@ -65,14 +65,14 @@ def _copy_deploy_artifacts(target_dir: Path) -> None:
 
 
 def _generate_launcher(target_dir: Path) -> None:
-    """Write the pmda_unifi.python launcher that PCP will invoke."""
-    launcher = target_dir / "pmda_unifi.python"
+    """Write the pmdaunifi.python launcher that PCP will invoke."""
+    launcher = target_dir / "pmdaunifi.python"
     launcher.write_text(LAUNCHER_SCRIPT)
 
 
 def _set_executable_permissions(target_dir: Path) -> None:
     """Make Install, Remove, and the launcher executable."""
-    executables = ["Install", "Remove", "pmda_unifi.python"]
+    executables = ["Install", "Remove", "pmdaunifi.python"]
     for filename in executables:
         filepath = target_dir / filename
         filepath.chmod(EXECUTABLE_PERMISSIONS)
