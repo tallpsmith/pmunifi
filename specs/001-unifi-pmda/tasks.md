@@ -265,36 +265,36 @@
 
 ### Documentation
 
-- [ ] T063 [P] Create `CONTRIBUTING.md` at repository root: dev setup (`pip install -e ".[dev]"`), repo structure guide, testing requirements (TDD mandatory, 90%+ coverage), code style (ruff enforced, mypy on public interfaces), PR process, UniFi API resource links (developer.ui.com, ubntwiki, unpoller)
-- [ ] T064 [P] Create man page source in `man/pmdaunifi.1.md`: synopsis, description, configuration file format, command-line options, installation/removal, files, environment variables, diagnostics — following PCP man page conventions
-- [ ] T065 [P] Create mkdocs site in `docs/`: `mkdocs.yml` config (material theme), `getting-started.md` (from quickstart.md), `configuration.md` (from contracts/configuration.md), `metrics.md` (auto-generated metric reference from data-model.md), `topology.md` (unifi2dot usage), `architecture.md` (threading, snapshot, caching), `grafana.md` (dashboard import guide), `troubleshooting.md` (common issues), `developer.md` (from CONTRIBUTING.md)
+- [x] T063 [P] Create `CONTRIBUTING.md` at repository root: dev setup (`pip install -e ".[dev]"`), repo structure guide, testing requirements (TDD mandatory, 90%+ coverage), code style (ruff enforced, mypy on public interfaces), PR process, UniFi API resource links (developer.ui.com, ubntwiki, unpoller)
+- [x] T064 [P] Create man page source in `man/pmdaunifi.1.md`: synopsis, description, configuration file format, command-line options, installation/removal, files, environment variables, diagnostics — following PCP man page conventions
+- [x] T065 [P] Create mkdocs site in `docs/`: `mkdocs.yml` config (material theme), `getting-started.md` (from quickstart.md), `configuration.md` (from contracts/configuration.md), `metrics.md` (auto-generated metric reference from data-model.md), `topology.md` (unifi2dot usage), `architecture.md` (threading, snapshot, caching), `grafana.md` (dashboard import guide), `troubleshooting.md` (common issues), `developer.md` (from CONTRIBUTING.md)
 
 ### Grafana Dashboards
 
-- [ ] T066 [P] Create Site Overview dashboard in `dashboards/site-overview.json`: site health status, total clients, device counts, WAN throughput, subsystem status; site_name template variable from labels
-- [ ] T067 [P] Create Switch Port Detail dashboard in `dashboards/switch-port-detail.json`: per-port rx/tx byte rates, error rates, PoE power, link state; switch and port selector variables
-- [ ] T068 [P] Create Client Insights dashboard in `dashboards/client-insights.json`: top clients by traffic, client count over time, wired vs wireless breakdown
-- [ ] T069 [P] Create AP Radio Performance dashboard in `dashboards/ap-radio-performance.json`: per-radio channel, client counts, tx retries, satisfaction scores
+- [x] T066 [P] Create Site Overview dashboard in `dashboards/site-overview.json`: site health status, total clients, device counts, WAN throughput, subsystem status; site_name template variable from labels
+- [x] T067 [P] Create Switch Port Detail dashboard in `dashboards/switch-port-detail.json`: per-port rx/tx byte rates, error rates, PoE power, link state; switch and port selector variables
+- [x] T068 [P] Create Client Insights dashboard in `dashboards/client-insights.json`: top clients by traffic, client count over time, wired vs wireless breakdown
+- [x] T069 [P] Create AP Radio Performance dashboard in `dashboards/ap-radio-performance.json`: per-radio channel, client counts, tx retries, satisfaction scores
 
 ### Packaging
 
-- [ ] T070 [P] Create RPM spec file in `packaging/rpm/pcp-pmda-unifi.spec`: BuildRequires python3-devel/setuptools/pcp-devel, Requires pcp/python3-pcp/python3-requests, installs to `%{_localstatedir}/lib/pcp/pmdas/unifi/`
-- [ ] T071 [P] Create Debian packaging in `packaging/deb/`: `control` (Depends: pcp, python3-pcp, python3-requests), `rules` (dh_python3), `postinst` (calls Install -u)
+- [x] T070 [P] Create RPM spec file in `packaging/rpm/pcp-pmda-unifi.spec`: BuildRequires python3-devel/setuptools/pcp-devel, Requires pcp/python3-pcp/python3-requests, installs to `%{_localstatedir}/lib/pcp/pmdas/unifi/`
+- [x] T071 [P] Create Debian packaging in `packaging/deb/`: `control` (Depends: pcp, python3-pcp, python3-requests), `rules` (dh_python3), `postinst` (calls Install -u)
 
 ### CI & Publishing
 
-- [ ] T072 Create release workflow in `.github/workflows/release.yml`: triggers on GitHub Release publish, builds sdist+wheel, publishes to PyPI via Trusted Publishing (OIDC, `pypa/gh-action-pypi-publish`)
+- [x] T072 Create release workflow in `.github/workflows/release.yml`: triggers on GitHub Release publish, builds sdist+wheel, publishes to PyPI via Trusted Publishing (OIDC, `pypa/gh-action-pypi-publish`)
 
 ### Ancillary Features
 
-- [ ] T073 Implement Install `-u` upgrade mode in `src/pcp_pmda_unifi/deploy/Install`: skip interactive prompts, preserve existing `unifi.conf`, re-generate PMNS/domain.h, re-register with PMCD
-- [ ] T074 [P] Create synthetic archive generator in `tests/generate_synthetic_archive.py`: define full PMNS, generate configurable topology (N switches × M ports, K clients, J APs), write realistic time-series data (monotonic counters, oscillating client counts, PoE values), output standard PCP archive via `pcp.LogImport`
+- [x] T073 Implement Install `-u` upgrade mode in `src/pcp_pmda_unifi/deploy/Install`: skip interactive prompts, preserve existing `unifi.conf`, re-generate PMNS/domain.h, re-register with PMCD
+- [x] T074 [P] Create synthetic archive generator in `tests/generate_synthetic_archive.py`: define full PMNS, generate configurable topology (N switches × M ports, K clients, J APs), write realistic time-series data (monotonic counters, oscillating client counts, PoE values), output standard PCP archive via `pcp.LogImport`
 
 ### Final Validation
 
-- [ ] T075 Write e2e test for full PMDA lifecycle in `tests/e2e/test_live_pmda.py`: start mock controller, run `./Install`, verify at least one metric per cluster — `unifi.site.num_sta` (cluster 0), `unifi.device.uptime` (cluster 1), `unifi.switch.port.rx_bytes` (cluster 2), `unifi.switch.port.poe.power` (cluster 3), `unifi.client.hostname` (cluster 4), `unifi.ap.num_sta` (cluster 5), `unifi.gateway.wan_rx_bytes` (cluster 6), `unifi.dpi.rx_bytes` (cluster 8), `unifi.controller.up` (cluster 9); verify `pminfo -l unifi.switch.port.rx_bytes` returns correct labels; run `./Remove` and verify metrics gone
-- [ ] T076 Write e2e test for unifi2dot in `tests/e2e/test_unifi2dot.py`: start mock HTTP server, run `unifi2dot` CLI, verify DOT output is valid Graphviz, verify JSON output is parseable
-- [ ] T077 Run quickstart.md validation: execute all commands from quickstart.md against mock controller and verify each produces expected output
+- [x] T075 Write e2e test for full PMDA lifecycle in `tests/e2e/test_live_pmda.py`: start mock controller, run `./Install`, verify at least one metric per cluster — `unifi.site.num_sta` (cluster 0), `unifi.device.uptime` (cluster 1), `unifi.switch.port.rx_bytes` (cluster 2), `unifi.switch.port.poe.power` (cluster 3), `unifi.client.hostname` (cluster 4), `unifi.ap.num_sta` (cluster 5), `unifi.gateway.wan_rx_bytes` (cluster 6), `unifi.dpi.rx_bytes` (cluster 8), `unifi.controller.up` (cluster 9); verify `pminfo -l unifi.switch.port.rx_bytes` returns correct labels; run `./Remove` and verify metrics gone
+- [x] T076 Write e2e test for unifi2dot in `tests/e2e/test_unifi2dot.py`: start mock HTTP server, run `unifi2dot` CLI, verify DOT output is valid Graphviz, verify JSON output is parseable
+- [x] T077 Run quickstart.md validation: execute all commands from quickstart.md against mock controller and verify each produces expected output
 
 **Checkpoint**: Full test suite green (unit + integration + e2e). Documentation site builds. Dashboards importable. Package builds cleanly.
 

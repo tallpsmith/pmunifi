@@ -1,0 +1,26 @@
+Source: pcp-pmda-unifi
+Section: admin
+Priority: optional
+Maintainer: pmdaunifi contributors <pmdaunifi@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-setuptools,
+               pcp
+Standards-Version: 4.6.2
+Homepage: https://github.com/pmdaunifi/pcp-pmda-unifi
+Rules-Requires-Root: no
+
+Package: pcp-pmda-unifi
+Architecture: all
+Depends: ${python3:Depends},
+         ${misc:Depends},
+         pcp,
+         python3-pcp,
+         python3-requests
+Description: PCP PMDA for UniFi network monitoring
+ Performance Co-Pilot (PCP) Performance Metrics Domain Agent (PMDA) for
+ Ubiquiti UniFi network infrastructure. Polls UniFi controllers via REST
+ API and exposes switch port traffic, device inventory, site health,
+ gateway WAN/LAN metrics, client tracking, AP radio, and DPI metrics
+ through the standard PCP toolchain.

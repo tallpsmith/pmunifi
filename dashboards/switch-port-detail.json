@@ -1,0 +1,244 @@
+{
+  "uid": "pcp-unifi-switch-port-detail",
+  "title": "UniFi Switch Port Detail",
+  "description": "Per-port traffic, errors, PoE power, and link state for UniFi switches",
+  "tags": ["pcp", "unifi"],
+  "editable": true,
+  "schemaVersion": 39,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "timezone": "browser",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PCP",
+        "type": "datasource",
+        "query": "pcp",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "device",
+        "label": "Switch",
+        "type": "query",
+        "datasource": { "uid": "${DS_PCP}" },
+        "query": "label_values(unifi.switch.port.rx_bytes, device_model)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {}
+      },
+      {
+        "name": "port",
+        "label": "Port",
+        "type": "query",
+        "datasource": { "uid": "${DS_PCP}" },
+        "query": "label_values(unifi.switch.port.rx_bytes{device_model=\"$device\"}, port_idx)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "sort": 3,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Port RX/TX Byte Rate",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "table", "placement": "right", "calcs": ["mean", "max", "lastNotNull"] } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(unifi.switch.port.rx_bytes{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} RX",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(unifi.switch.port.tx_bytes{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} TX",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Port Error Rate",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "pps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(unifi.switch.port.rx_errors{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} RX Errors",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(unifi.switch.port.tx_errors{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} TX Errors",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "C",
+          "expr": "rate(unifi.switch.port.rx_dropped{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} RX Dropped",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "D",
+          "expr": "rate(unifi.switch.port.tx_dropped{device_model=\"$device\", port_idx=~\"$port\"})",
+          "legendFormat": "Port {{port_idx}} TX Dropped",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "PoE Power Draw",
+      "type": "gauge",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "min": 0,
+          "max": 30,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 15 },
+              { "color": "red", "value": 25 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true, "orientation": "horizontal" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.switch.port.poe.power{device_model=\"$device\", port_idx=~\"$port\"}",
+          "legendFormat": "Port {{port_idx}}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Port Link State",
+      "type": "table",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 18 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "center" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Link Up" },
+            "properties": [
+              { "id": "mappings", "value": [{ "type": "value", "options": { "0": { "text": "Down", "color": "red" }, "1": { "text": "Up", "color": "green" } } }] },
+              { "id": "custom.displayMode", "value": "color-background-solid" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Speed" },
+            "properties": [{ "id": "unit", "value": "Mbps" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "PoE Power" },
+            "properties": [{ "id": "unit", "value": "watt" }]
+          }
+        ]
+      },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Port", "desc": false }] },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "port_idx": "Port",
+              "Value #A": "Link Up",
+              "Value #B": "Speed",
+              "Value #C": "Duplex",
+              "Value #D": "PoE Power",
+              "Value #E": "Satisfaction"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.switch.port.up{device_model=\"$device\", port_idx=~\"$port\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "unifi.switch.port.speed{device_model=\"$device\", port_idx=~\"$port\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "C",
+          "expr": "unifi.switch.port.full_duplex{device_model=\"$device\", port_idx=~\"$port\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "D",
+          "expr": "unifi.switch.port.poe.power{device_model=\"$device\", port_idx=~\"$port\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "E",
+          "expr": "unifi.switch.port.satisfaction{device_model=\"$device\", port_idx=~\"$port\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export PYBUILD_NAME = pcp-pmda-unifi
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_install:
+	dh_auto_install
+	# Create PMDA directory structure
+	install -d debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi
+	# Deploy PMDA assets
+	install -m 0755 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/Install \
+		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Install
+	install -m 0755 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/Remove \
+		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Remove
+	install -m 0644 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/unifi.conf.sample \
+		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/unifi.conf.sample

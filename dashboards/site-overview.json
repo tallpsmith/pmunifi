@@ -1,0 +1,271 @@
+{
+  "uid": "pcp-unifi-site-overview",
+  "title": "UniFi Site Overview",
+  "description": "Site health, device counts, client totals, and WAN throughput for a UniFi site",
+  "tags": ["pcp", "unifi"],
+  "editable": true,
+  "schemaVersion": 39,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "timezone": "browser",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PCP",
+        "type": "datasource",
+        "query": "pcp",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "site_name",
+        "type": "query",
+        "datasource": { "uid": "${DS_PCP}" },
+        "query": "label_values(unifi.site.num_sta, site_name)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Site Health Status",
+      "type": "stat",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "ok": { "text": "Healthy", "color": "green" } } },
+            { "type": "value", "options": { "unknown": { "text": "Unknown", "color": "orange" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "auto" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.status{site_name=\"$site_name\"}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Total Clients",
+      "type": "gauge",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "max": 500,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 200 },
+              { "color": "red", "value": 400 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdLabels": false, "showThresholdMarkers": true },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_sta{site_name=\"$site_name\"}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Access Points",
+      "type": "stat",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "auto" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_ap{site_name=\"$site_name\"}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Switches",
+      "type": "stat",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "auto" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_sw{site_name=\"$site_name\"}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Gateways",
+      "type": "stat",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "textMode": "auto" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_gw{site_name=\"$site_name\"}",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "WAN Throughput",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "gradientMode": "scheme",
+            "axisCenteredZero": true,
+            "showPoints": "never"
+          },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "TX Bytes" },
+            "properties": [
+              { "id": "custom.transform", "value": "negative-Y" },
+              { "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "RX Bytes" },
+            "properties": [
+              { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }
+            ]
+          }
+        ]
+      },
+      "options": { "tooltip": { "mode": "multi", "sort": "none" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(unifi.site.wan.rx_bytes{site_name=\"$site_name\"})",
+          "legendFormat": "RX Bytes",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(unifi.site.wan.tx_bytes{site_name=\"$site_name\"})",
+          "legendFormat": "TX Bytes",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "User vs Guest Clients",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 20, "stacking": { "mode": "normal" }, "showPoints": "never" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_user{site_name=\"$site_name\"}",
+          "legendFormat": "Users",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "unifi.site.num_guest{site_name=\"$site_name\"}",
+          "legendFormat": "Guests",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "LAN Throughput",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 2, "fillOpacity": 15, "showPoints": "never" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(unifi.site.lan.rx_bytes{site_name=\"$site_name\"})",
+          "legendFormat": "LAN RX",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(unifi.site.lan.tx_bytes{site_name=\"$site_name\"})",
+          "legendFormat": "LAN TX",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    }
+  ]
+}
