@@ -40,6 +40,13 @@ Views are strictly separated by metric semantics:
 No view mixes counter and instant metrics. This ensures one-shot views return
 instantly and rate views always show meaningful per-second values.
 
+**Exception:** `:unifi-switch-ports` and `:unifi-ap-detail` intentionally include
+both instant context columns (up/speed/duplex, radio_type/channel) alongside
+counter metrics. Splitting these into separate views would harm usability —
+you need the context columns to interpret the rates. pmrep handles this
+correctly: instant metrics show their current value while counters are
+rate-converted.
+
 ## Views
 
 ### 1. `:unifi-health` — PMDA & Controller Health
