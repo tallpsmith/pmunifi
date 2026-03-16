@@ -188,3 +188,105 @@ class TestMultiControllerNaming:
 
     def test_controller_names_are_distinct(self):
         assert controller_instance_name("hq") != controller_instance_name("branch")
+
+
+# ---------------------------------------------------------------------------
+# Issue #3: Single-controller simplification — omit controller prefix
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestSingleControllerOmitsPrefix:
+    """When single_controller=True, the controller prefix is dropped from
+    instance names because it's redundant noise for the 90% case.
+    """
+
+    def test_site_omits_controller_prefix(self):
+        assert site_instance_name("main", "default", single_controller=True) == "default"
+
+    def test_device_omits_controller_prefix(self):
+        assert (
+            device_instance_name("main", "default", "USW-Ultra-60W", single_controller=True)
+            == "default/USW-Ultra-60W"
+        )
+
+    def test_switch_port_omits_controller_prefix(self):
+        assert (
+            switch_port_instance_name("main", "default", "USW-Pro-48", 1, single_controller=True)
+            == "default/USW-Pro-48::Port1"
+        )
+
+    def test_client_omits_controller_prefix(self):
+        assert (
+            client_instance_name("main", "default", "laptop-alice", single_controller=True)
+            == "default/laptop-alice"
+        )
+
+    def test_ap_radio_omits_controller_prefix(self):
+        assert (
+            ap_radio_instance_name("main", "default", "UAP-AC-Pro", "na", single_controller=True)
+            == "default/UAP-AC-Pro::na"
+        )
+
+    def test_gateway_omits_controller_prefix(self):
+        assert (
+            gateway_instance_name("main", "default", "UDM-Pro", single_controller=True)
+            == "default/UDM-Pro"
+        )
+
+    def test_dpi_category_omits_controller_prefix(self):
+        assert (
+            dpi_category_instance_name("main", "default", "Streaming", single_controller=True)
+            == "default/Streaming"
+        )
+
+
+@pytest.mark.unit
+class TestMultiControllerKeepsPrefix:
+    """When single_controller=False (the default), the controller prefix
+    remains for disambiguation — backwards-compatible behavior.
+    """
+
+    def test_site_keeps_controller_prefix(self):
+        assert site_instance_name("hq", "default", single_controller=False) == "hq/default"
+
+    def test_device_keeps_controller_prefix(self):
+        assert (
+            device_instance_name("hq", "default", "SwitchA", single_controller=False)
+            == "hq/default/SwitchA"
+        )
+
+    def test_default_is_multi_controller(self):
+        """Calling without single_controller kwarg preserves the old behavior."""
+        assert site_instance_name("hq", "default") == "hq/default"
+
+
+@pytest.mark.unit
+class TestPmdaConfigSingleControllerFlag:
+    """PmdaConfig.is_single_controller is derived from controller count."""
+
+    def test_single_controller_config(self):
+        from pcp_pmda_unifi.config import parse_config
+
+        ini = """\
+[controller:main]
+url = https://192.168.1.1
+api_key = some-key
+"""
+        cfg = parse_config(ini)
+        assert cfg.is_single_controller is True
+
+    def test_multi_controller_config(self):
+        from pcp_pmda_unifi.config import parse_config
+
+        ini = """\
+[controller:hq]
+url = https://10.0.0.1
+api_key = ak-hq
+
+[controller:branch]
+url = https://10.1.0.1
+api_key = ak-branch
+"""
+        cfg = parse_config(ini)
+        assert cfg.is_single_controller is False

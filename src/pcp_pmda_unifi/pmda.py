@@ -307,6 +307,7 @@ if HAS_PCP:
 
             self._pollers: List[ControllerPoller] = []
             self._config: Optional[PmdaConfig] = None
+            self._single_controller: bool = False
 
             # Instance domain tables — rebuilt each pre-fetch from live snapshots
             self._site_instances: List = []
@@ -475,6 +476,7 @@ if HAS_PCP:
                 with open(config_path) as fh:
                     ini_content = fh.read()
                 self._config = parse_config(ini_content)
+                self._single_controller = self._config.is_single_controller
             except Exception:
                 log.exception("Failed to load config from %s", config_path)
                 return
@@ -557,6 +559,7 @@ if HAS_PCP:
                 for site_name, site_data in snapshot.sites.items():
                     inst_name = site_instance_name(
                         snapshot.controller_name, site_name,
+                        single_controller=self._single_controller,
                     )
                     # Find the first gateway in this site for WAN/LAN byte counters
                     site_gateway = self._find_site_gateway(site_data)
@@ -591,6 +594,7 @@ if HAS_PCP:
                             snapshot.controller_name,
                             site_name,
                             device.meta.name or device.meta.mac,
+                            single_controller=self._single_controller,
                         )
                         instances.append(pmdaInstid(inst_id, inst_name))
                         device_meta_by_inst[inst_id] = device.meta
@@ -620,6 +624,7 @@ if HAS_PCP:
                                 site_name,
                                 device.meta.name or device.meta.mac,
                                 port_idx,
+                                single_controller=self._single_controller,
                             )
                             instances.append(pmdaInstid(inst_id, inst_name))
                             port_data_by_inst[inst_id] = port_data
@@ -646,6 +651,7 @@ if HAS_PCP:
                             site_name,
                             client.hostname,
                             client.mac,
+                            single_controller=self._single_controller,
                         )
                         instances.append(pmdaInstid(inst_id, inst_name))
                         client_data_by_inst[inst_id] = client
@@ -675,6 +681,7 @@ if HAS_PCP:
                                 site_name,
                                 device.meta.name or device.meta.mac,
                                 radio.radio_type,
+                                single_controller=self._single_controller,
                             )
                             instances.append(pmdaInstid(inst_id, inst_name))
                             radio_data_by_inst[inst_id] = radio
@@ -702,6 +709,7 @@ if HAS_PCP:
                             snapshot.controller_name,
                             site_name,
                             device.meta.name or device.meta.mac,
+                            single_controller=self._single_controller,
                         )
                         # Store gateway data alongside device uptime
                         instances.append(pmdaInstid(inst_id, inst_name))
@@ -730,6 +738,7 @@ if HAS_PCP:
                             snapshot.controller_name,
                             site_name,
                             dpi.category_name,
+                            single_controller=self._single_controller,
                         )
                         instances.append(pmdaInstid(inst_id, inst_name))
                         dpi_data_by_inst[inst_id] = dpi
