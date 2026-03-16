@@ -12,7 +12,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
       - run: uvx ruff check src/ tests/
       - run: |
-          uv pip install --system mypy
+          uv pip install --system mypy types-requests
           mypy src/pcp_pmda_unifi/ --ignore-missing-imports
 
   unit:
