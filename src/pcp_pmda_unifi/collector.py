@@ -129,7 +129,8 @@ def _parse_response_envelope(response: requests.Response) -> List[Dict[str, Any]
             status_code=response.status_code,
         )
 
-    return body.get("data", [])
+    result: List[Dict[str, Any]] = body.get("data", [])
+    return result
 
 
 # ---------------------------------------------------------------------------

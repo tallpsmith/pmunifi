@@ -48,7 +48,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp
       - run: |
           sudo systemctl start pmcd
-          /usr/libexec/pcp/bin/pmcd_wait -t 10
+          . /etc/pcp.env && "$PCP_BINADM_DIR/pmcd_wait" -t 10
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

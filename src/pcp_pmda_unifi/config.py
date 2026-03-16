@@ -254,7 +254,7 @@ def parse_config(ini_content: str) -> PmdaConfig:
     fields, out-of-range numerics, malformed controller names).
     """
     parser = configparser.ConfigParser()
-    parser.optionxform = str  # preserve case sensitivity
+    parser.optionxform = str  # type: ignore[assignment]  # preserve case sensitivity
     parser.read_string(ini_content)
 
     _apply_environment_overrides(parser)

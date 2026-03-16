@@ -114,7 +114,8 @@ def _find_uplink_port(device: Dict) -> int:
     """Find the port_idx of the uplink port on a device, or 0 if unknown."""
     for port in device.get("port_table", []):
         if port.get("is_uplink"):
-            return port.get("port_idx", 0)
+            result: int = port.get("port_idx", 0)
+            return result
     return 0
 
 
