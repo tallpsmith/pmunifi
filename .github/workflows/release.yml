@@ -17,8 +17,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          fetch-tags: true    # hatch-vcs needs full history for version
-          fetch-tags: true  # setuptools-scm needs tags to resolve version
+          fetch-tags: true    # hatch-vcs needs full tag history for version
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
