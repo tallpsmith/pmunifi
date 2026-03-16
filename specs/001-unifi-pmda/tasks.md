@@ -254,8 +254,8 @@
 
 **Purpose**: Per-site, per-DPI-category traffic totals (rx/tx bytes). Opt-in via `enable_dpi = true`.
 
-- [ ] T061 [P] Write failing tests for DPI metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 8 metrics (rx_bytes, tx_bytes), dpi_category indom populated from sitedpi response (~20 categories), DPI disabled by default (no indom entries), DPI enabled via config flag
-- [ ] T062 Implement DPI metrics (cluster 8) in `src/pcp_pmda_unifi/pmda.py`: add dpi_category indom (dict-based), register 2 DPI metrics, extend fetch_callback for cluster 8; extend poller to call `fetch_dpi()` on 300s interval only when `enable_dpi = true`; extend snapshot with `dpi_categories` list
+- [x] T061 [P] Write failing tests for DPI metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 8 metrics (rx_bytes, tx_bytes), dpi_category indom populated from sitedpi response (~20 categories), DPI disabled by default (no indom entries), DPI enabled via config flag
+- [x] T062 Implement DPI metrics (cluster 8) in `src/pcp_pmda_unifi/pmda.py`: add dpi_category indom (dict-based), register 2 DPI metrics, extend fetch_callback for cluster 8; extend poller to call `fetch_dpi()` on 300s interval only when `enable_dpi = true`; extend snapshot with `dpi_categories` list
 
 ---
 

@@ -54,6 +54,12 @@ try:
     _AP_RADIO_METRICS = _ARM
 except ImportError:
     pass
+_DPI_METRICS = None
+try:
+    from pcp_pmda_unifi.pmda import DPI_METRICS as _DPIM
+    _DPI_METRICS = _DPIM
+except ImportError:
+    pass
 
 pytestmark = [
     pytest.mark.integration,
@@ -530,3 +536,70 @@ class TestApRadioMetricRegistration:
         assert _AP_RADIO_METRICS is not None
         item_ids = [m[1] for m in _AP_RADIO_METRICS]
         assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in AP_RADIO_METRICS"
+
+
+# ---------------------------------------------------------------------------
+# T061: DPI metric registration (cluster 8)
+# ---------------------------------------------------------------------------
+
+
+class TestDpiMetricRegistration:
+    """Cluster 8: all 2 DPI metrics from data-model.md (opt-in FR-023)."""
+
+    def test_dpi_metrics_list_exists(self):
+        """DPI_METRICS must be importable from pmda module."""
+        assert _DPI_METRICS is not None, "DPI_METRICS not exported from pmda"
+
+    def test_dpi_metrics_count(self):
+        """Exactly 2 DPI metrics per the data model."""
+        assert _DPI_METRICS is not None
+        assert len(_DPI_METRICS) == 2
+
+    def test_dpi_metrics_have_required_fields(self):
+        """Each metric tuple has (name, item, type, sem, attr_name)."""
+        assert _DPI_METRICS is not None
+        for metric in _DPI_METRICS:
+            assert len(metric) == 5, f"Metric {metric[0]} has wrong tuple length"
+
+    def test_dpi_metric_names_are_namespaced(self):
+        """All DPI metrics live under unifi.dpi.*"""
+        assert _DPI_METRICS is not None
+        for metric in _DPI_METRICS:
+            name = metric[0]
+            assert name.startswith("unifi.dpi."), (
+                f"Metric {name} not under unifi.dpi"
+            )
+
+    def test_dpi_metric_names_match_data_model(self):
+        """All 2 metric names from the data model are present."""
+        assert _DPI_METRICS is not None
+        expected_names = {
+            "unifi.dpi.rx_bytes",
+            "unifi.dpi.tx_bytes",
+        }
+        actual_names = {m[0] for m in _DPI_METRICS}
+        assert actual_names == expected_names
+
+    def test_dpi_metrics_are_counters(self):
+        """Both DPI metrics must be PM_SEM_COUNTER."""
+        assert _DPI_METRICS is not None
+        from cpmapi import PM_SEM_COUNTER
+        for metric in _DPI_METRICS:
+            assert metric[3] == PM_SEM_COUNTER, (
+                f"Metric {metric[0]} should be PM_SEM_COUNTER"
+            )
+
+    def test_dpi_metrics_are_u64(self):
+        """Both DPI metrics must be PM_TYPE_U64."""
+        assert _DPI_METRICS is not None
+        from cpmapi import PM_TYPE_U64
+        for metric in _DPI_METRICS:
+            assert metric[2] == PM_TYPE_U64, (
+                f"Metric {metric[0]} should be PM_TYPE_U64"
+            )
+
+    def test_dpi_item_ids_are_unique(self):
+        """Item IDs within the cluster must not collide."""
+        assert _DPI_METRICS is not None
+        item_ids = [m[1] for m in _DPI_METRICS]
+        assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in DPI_METRICS"

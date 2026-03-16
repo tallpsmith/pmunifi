@@ -26,6 +26,7 @@ from pcp_pmda_unifi.instances import (
     client_instance_name,
     controller_instance_name,
     device_instance_name,
+    dpi_category_instance_name,
     gateway_instance_name,
     site_instance_name,
     switch_port_instance_name,
@@ -34,6 +35,7 @@ from pcp_pmda_unifi.poller import ControllerPoller
 from pcp_pmda_unifi.snapshot import (
     ClientData,
     DeviceMeta,
+    DpiData,
     GatewayData,
     HealthData,
     PortData,
@@ -68,6 +70,7 @@ INDOM_CLIENT = 3
 INDOM_AP_RADIO = 4
 INDOM_GATEWAY = 5
 INDOM_CONTROLLER = 6
+INDOM_DPI_CATEGORY = 7
 
 # ---------------------------------------------------------------------------
 # Cluster numbers (must match data-model.md cluster allocation)
@@ -80,6 +83,7 @@ CLUSTER_POE = 3
 CLUSTER_CLIENT = 4
 CLUSTER_AP_RADIO = 5
 CLUSTER_GATEWAY = 6
+CLUSTER_DPI = 8
 CLUSTER_CONTROLLER = 9
 
 # ---------------------------------------------------------------------------
@@ -201,6 +205,12 @@ if HAS_PCP:
         ("unifi.gateway.temperature",     17, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "temperature"),
     ]
 
+    # -- Cluster 8: DPI metrics (indom: dpi_category, opt-in FR-023) ----------
+    DPI_METRICS: List[Tuple[str, int, int, int, str]] = [
+        ("unifi.dpi.rx_bytes",  0, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "rx_bytes"),
+        ("unifi.dpi.tx_bytes",  1, c_api.PM_TYPE_U64, c_api.PM_SEM_COUNTER, "tx_bytes"),
+    ]
+
     # -- Cluster 4: client metrics (indom: client) ----------------------------
     CLIENT_METRICS: List[Tuple[str, int, int, int, str]] = [
         ("unifi.client.hostname",       0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "hostname"),
@@ -237,6 +247,7 @@ else:
     SWITCH_PORT_METRICS = []
     POE_METRICS = []
     AP_RADIO_METRICS = []
+    DPI_METRICS = []
     CLIENT_METRICS = []
     GATEWAY_METRICS = []
     CONTROLLER_METRICS = []
@@ -287,6 +298,7 @@ if HAS_PCP:
             self._ap_radio_instances: List = []
             self._gateway_instances: List = []
             self._controller_instances: List = []
+            self._dpi_instances: List = []
 
             # Instance-to-data lookup caches — rebuilt in pre-fetch
             self._site_data_by_inst: Dict[int, Tuple[SiteData, Optional[GatewayData]]] = {}
@@ -296,6 +308,7 @@ if HAS_PCP:
             self._ap_radio_data_by_inst: Dict[int, RadioData] = {}
             self._gateway_data_by_inst: Dict[int, Tuple[GatewayData, int]] = {}
             self._controller_health_by_inst: Dict[int, Dict] = {}
+            self._dpi_data_by_inst: Dict[int, DpiData] = {}
 
             # Grace period trackers for dynamic indoms
             self._site_tracker = GracePeriodTracker()
@@ -304,6 +317,7 @@ if HAS_PCP:
             self._client_tracker = GracePeriodTracker()
             self._ap_radio_tracker = GracePeriodTracker()
             self._gateway_tracker = GracePeriodTracker()
+            self._dpi_tracker = GracePeriodTracker()
 
             self._register_indoms()
             self._register_site_metrics()
@@ -313,6 +327,7 @@ if HAS_PCP:
             self._register_client_metrics()
             self._register_ap_radio_metrics()
             self._register_gateway_metrics()
+            self._register_dpi_metrics()
             self._register_controller_metrics()
 
             self.set_fetch_callback(self._fetch_callback)
@@ -331,12 +346,14 @@ if HAS_PCP:
             self._ap_radio_indom = self.indom(INDOM_AP_RADIO)
             self._gateway_indom = self.indom(INDOM_GATEWAY)
             self._controller_indom = self.indom(INDOM_CONTROLLER)
+            self._dpi_indom = self.indom(INDOM_DPI_CATEGORY)
             self.add_indom(pmdaIndom(self._site_indom, []))
             self.add_indom(pmdaIndom(self._device_indom, []))
             self.add_indom(pmdaIndom(self._switch_port_indom, []))
             self.add_indom(pmdaIndom(self._client_indom, []))
             self.add_indom(pmdaIndom(self._ap_radio_indom, []))
             self.add_indom(pmdaIndom(self._gateway_indom, []))
+            self.add_indom(pmdaIndom(self._dpi_indom, []))
             self.add_indom(pmdaIndom(self._controller_indom, []))
 
         # -- Metric registration ---------------------------------------------
@@ -403,6 +420,13 @@ if HAS_PCP:
                 "UniFi gateway metric",
             )
 
+        def _register_dpi_metrics(self) -> None:
+            """Register all 2 DPI metrics in cluster 8 (opt-in FR-023)."""
+            self._register_metrics_for_cluster(
+                DPI_METRICS, CLUSTER_DPI, self._dpi_indom,
+                "UniFi DPI category metric",
+            )
+
         def _register_controller_metrics(self) -> None:
             """Register all 8 controller health metrics in cluster 9."""
             self._register_metrics_for_cluster(
@@ -454,6 +478,7 @@ if HAS_PCP:
                     sites=ctrl_cfg.sites,
                     poll_interval=poll_interval,
                     max_clients=global_settings.max_clients,
+                    enable_dpi=global_settings.enable_dpi,
                 )
                 poller.start()
                 self._pollers.append(poller)
@@ -478,6 +503,7 @@ if HAS_PCP:
             self._rebuild_client_instances()
             self._rebuild_ap_radio_instances()
             self._rebuild_gateway_instances()
+            self._rebuild_dpi_instances()
             self._rebuild_controller_instances()
 
             self.replace_indom(self._site_indom, self._site_instances)
@@ -486,6 +512,7 @@ if HAS_PCP:
             self.replace_indom(self._client_indom, self._client_instances)
             self.replace_indom(self._ap_radio_indom, self._ap_radio_instances)
             self.replace_indom(self._gateway_indom, self._gateway_instances)
+            self.replace_indom(self._dpi_indom, self._dpi_instances)
             self.replace_indom(self._controller_indom, self._controller_instances)
 
             self._warn_if_fetch_too_slow(fetch_start)
@@ -660,6 +687,31 @@ if HAS_PCP:
             self._gateway_instances = instances
             self._gateway_data_by_inst = gateway_data_by_inst
 
+        def _rebuild_dpi_instances(self) -> None:
+            """Walk all snapshots and build DPI category instance lists."""
+            instances = []
+            dpi_data_by_inst: Dict[int, DpiData] = {}
+            inst_id = 0
+
+            for poller in self._pollers:
+                snapshot = poller.snapshot
+                if snapshot is None:
+                    continue
+
+                for site_name, site_data in snapshot.sites.items():
+                    for dpi in site_data.dpi_categories:
+                        inst_name = dpi_category_instance_name(
+                            snapshot.controller_name,
+                            site_name,
+                            dpi.category_name,
+                        )
+                        instances.append(pmdaInstid(inst_id, inst_name))
+                        dpi_data_by_inst[inst_id] = dpi
+                        inst_id += 1
+
+            self._dpi_instances = instances
+            self._dpi_data_by_inst = dpi_data_by_inst
+
         def _rebuild_controller_instances(self) -> None:
             """Build controller instance list — one per poller."""
             instances = []
@@ -705,6 +757,8 @@ if HAS_PCP:
                 return self._fetch_ap_radio(item, inst)
             if cluster == CLUSTER_GATEWAY:
                 return self._fetch_gateway(item, inst)
+            if cluster == CLUSTER_DPI:
+                return self._fetch_dpi(item, inst)
             if cluster == CLUSTER_CONTROLLER:
                 return self._fetch_controller(item, inst)
             return [c_api.PM_ERR_PMID, 0]
@@ -901,6 +955,22 @@ if HAS_PCP:
                 return [device_uptime, 1]
 
             return self._extract_dataclass_value(gw_data, attr_name)
+
+        # -- Cluster 8: DPI fetch -----------------------------------------------
+
+        def _fetch_dpi(self, item: int, inst: int) -> list:
+            """Fetch a single DPI category metric value."""
+            dpi = self._dpi_data_by_inst.get(inst)
+            if dpi is None:
+                if not self._dpi_data_by_inst:
+                    return [c_api.PM_ERR_AGAIN, 0]
+                return [c_api.PM_ERR_INST, 0]
+
+            if item < 0 or item >= len(DPI_METRICS):
+                return [c_api.PM_ERR_PMID, 0]
+
+            attr_name = DPI_METRICS[item][4]
+            return self._extract_dataclass_value(dpi, attr_name)
 
         # -- Cluster 9: controller fetch -------------------------------------
 

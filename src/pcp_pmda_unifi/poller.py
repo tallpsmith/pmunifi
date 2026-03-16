@@ -38,6 +38,7 @@ class ControllerPoller(threading.Thread):
         sites: List[str],
         poll_interval: int = 30,
         max_clients: int = 1000,
+        enable_dpi: bool = False,
     ):
         super().__init__(name=f"poller-{controller_name}")
         self.daemon = True
@@ -46,6 +47,7 @@ class ControllerPoller(threading.Thread):
         self._sites = sites
         self.poll_interval = poll_interval
         self._max_clients = max_clients
+        self._enable_dpi = enable_dpi
 
         self._snapshot: Optional[Snapshot] = None
         self._poll_duration_ms: float = 0.0
@@ -146,10 +148,14 @@ class ControllerPoller(threading.Thread):
         )
 
     def _poll_single_site(self, site_name: str) -> Snapshot:
-        """Fetch devices, clients, and health for one site."""
+        """Fetch devices, clients, health, and optionally DPI for one site."""
         devices_data = self._client.fetch_devices(site_name)
         clients_data = self._client.fetch_clients(site_name)
         health_data = self._client.fetch_health(site_name)
+
+        dpi_data = None
+        if self._enable_dpi:
+            dpi_data = self._client.fetch_dpi(site_name)
 
         return build_snapshot_from_api(
             controller_name=self.controller_name,
@@ -157,6 +163,7 @@ class ControllerPoller(threading.Thread):
             devices_data=devices_data,
             clients_data=clients_data,
             health_data=health_data,
+            dpi_data=dpi_data,
             max_clients=self._max_clients,
         )
 

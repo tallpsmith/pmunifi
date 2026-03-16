@@ -415,3 +415,63 @@ class TestMultiControllerPoller:
         assert hq.controller_health["up"] == 1
         assert branch.controller_health["up"] == 1
         assert hq.controller_health is not branch.controller_health
+
+
+# ---------------------------------------------------------------------------
+# T061/T062: DPI opt-in polling
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestPollerDpiOptIn:
+    """When enable_dpi=True, poller calls fetch_dpi and includes DPI data."""
+
+    def test_dpi_disabled_by_default(self):
+        """By default, enable_dpi should be False."""
+        client = _make_mock_client()
+        poller = ControllerPoller("main", client, sites=["default"])
+        assert poller._enable_dpi is False
+
+    def test_enable_dpi_constructor_parameter(self):
+        """Constructor accepts enable_dpi kwarg."""
+        client = _make_mock_client()
+        poller = ControllerPoller("main", client, sites=["default"], enable_dpi=True)
+        assert poller._enable_dpi is True
+
+    def test_dpi_disabled_does_not_call_fetch_dpi(self):
+        """When DPI is off, fetch_dpi must never be called."""
+        client = _make_mock_client()
+        poller = ControllerPoller("main", client, sites=["default"], enable_dpi=False)
+        poller.poll_once()
+        client.fetch_dpi.assert_not_called()
+
+    def test_dpi_enabled_calls_fetch_dpi(self):
+        """When DPI is on, fetch_dpi must be called for each site."""
+        client = _make_mock_client()
+        client.fetch_dpi.return_value = [
+            {"by_cat": [{"cat": 3, "rx_bytes": 1000, "tx_bytes": 2000}]},
+        ]
+        poller = ControllerPoller("main", client, sites=["default"], enable_dpi=True)
+        poller.poll_once()
+        client.fetch_dpi.assert_called_with("default")
+
+    def test_dpi_enabled_snapshot_has_dpi_categories(self):
+        """When DPI is on, snapshot should contain DPI category data."""
+        client = _make_mock_client()
+        client.fetch_dpi.return_value = [
+            {"by_cat": [{"cat": 3, "rx_bytes": 1000, "tx_bytes": 2000}]},
+        ]
+        poller = ControllerPoller("main", client, sites=["default"], enable_dpi=True)
+        poller.poll_once()
+        site = poller.snapshot.sites["default"]
+        assert len(site.dpi_categories) == 1
+        assert site.dpi_categories[0].category_name == "Streaming-Media"
+        assert site.dpi_categories[0].rx_bytes == 1000
+
+    def test_dpi_disabled_snapshot_has_empty_dpi_categories(self):
+        """When DPI is off, dpi_categories should be empty."""
+        client = _make_mock_client()
+        poller = ControllerPoller("main", client, sites=["default"], enable_dpi=False)
+        poller.poll_once()
+        site = poller.snapshot.sites["default"]
+        assert site.dpi_categories == []
