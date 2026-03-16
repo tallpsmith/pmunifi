@@ -1,0 +1,240 @@
+#!/bin/sh
+#
+# pmdaunifi Install script — registers the PMDA with PMCD.
+#
+# Modes:
+#   ./Install        Interactive: prompts for URL, API key, site selection
+#   ./Install -e     Non-interactive: reads UNIFI_* environment variables
+#   ./Install -u     Upgrade: preserves existing config, re-registers only
+#
+
+. $PCP_DIR/etc/pcp.env
+. $PCP_SHARE_DIR/lib/pmdaproc.sh
+
+iam=unifi
+python_opt=true
+daemon_opt=false
+
+# The Python helper does the heavy lifting (connectivity checks, config gen)
+python=${PCP_PYTHON_PROG:-pmpython}
+
+# ---------------------------------------------------------------------------
+# Parse flags
+# ---------------------------------------------------------------------------
+env_mode=false
+upgrade_mode=false
+
+while getopts "eu" opt; do
+    case "$opt" in
+        e) env_mode=true ;;
+        u) upgrade_mode=true ;;
+        *) ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# Upgrade mode: skip all prompts, just re-register with PMCD
+# ---------------------------------------------------------------------------
+if $upgrade_mode; then
+    echo "Upgrade mode: preserving existing unifi.conf"
+    pmdaSetup
+    pmdaInstall
+    exit $?
+fi
+
+# ---------------------------------------------------------------------------
+# Non-interactive mode: build config from UNIFI_* environment variables
+# ---------------------------------------------------------------------------
+if $env_mode; then
+    echo "Non-interactive mode: reading from environment variables"
+    config=$($python -m pcp_pmda_unifi.install_helper --env-config 2>&1)
+    status=$?
+    if [ $status -ne 0 ]; then
+        echo "Error: $config"
+        exit 1
+    fi
+    echo "$config" > "$PCP_PMDAS_DIR/unifi/unifi.conf"
+    chmod 0640 "$PCP_PMDAS_DIR/unifi/unifi.conf"
+    chown root:pcp "$PCP_PMDAS_DIR/unifi/unifi.conf" 2>/dev/null
+
+    pmdaSetup
+    pmdaInstall
+    exit $?
+fi
+
+# ---------------------------------------------------------------------------
+# Interactive mode: prompt the user for connection details
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== UniFi PCP PMDA Configuration ==="
+echo ""
+
+# Controller URL
+printf "Controller URL [https://192.168.1.1]: "
+read controller_url
+controller_url=${controller_url:-https://192.168.1.1}
+
+# UniFi OS device?
+printf "Is this a UniFi OS device (UDM/UDR/UCG)? [Y/n]: "
+read is_udm_input
+case "$is_udm_input" in
+    [nN]*) is_udm="false" ;;
+    *)     is_udm="true" ;;
+esac
+
+# API key (no echo)
+printf "API key: "
+stty -echo 2>/dev/null
+read api_key
+stty echo 2>/dev/null
+echo ""
+
+if [ -z "$api_key" ]; then
+    echo "Error: API key cannot be empty"
+    exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Validate connectivity
+# ---------------------------------------------------------------------------
+verify_ssl="true"
+
+echo ""
+echo "Testing connectivity to $controller_url ..."
+result=$($python -m pcp_pmda_unifi.install_helper \
+    --validate \
+    --url "$controller_url" \
+    --api-key "$api_key" \
+    --is-udm "$is_udm" \
+    --verify-ssl "$verify_ssl" 2>&1)
+status=$?
+
+if [ $status -ne 0 ]; then
+    echo "$result"
+
+    # If it looks like an SSL error, offer to retry without verification
+    case "$result" in
+        *SSL*|*ssl*|*certificate*)
+            printf "Disable SSL verification and retry? [Y/n]: "
+            read disable_ssl
+            case "$disable_ssl" in
+                [nN]*) echo "Aborting."; exit 1 ;;
+                *)
+                    verify_ssl="false"
+                    echo "Retrying without SSL verification..."
+                    result=$($python -m pcp_pmda_unifi.install_helper \
+                        --validate \
+                        --url "$controller_url" \
+                        --api-key "$api_key" \
+                        --is-udm "$is_udm" \
+                        --verify-ssl "$verify_ssl" 2>&1)
+                    status=$?
+                    if [ $status -ne 0 ]; then
+                        echo "$result"
+                        echo "Connection failed. Aborting."
+                        exit 1
+                    fi
+                    ;;
+            esac
+            ;;
+        *)
+            echo "Connection failed. Aborting."
+            exit 1
+            ;;
+    esac
+fi
+
+echo "$result"
+
+# ---------------------------------------------------------------------------
+# Discover sites
+# ---------------------------------------------------------------------------
+echo ""
+echo "Discovering sites..."
+sites_json=$($python -m pcp_pmda_unifi.install_helper \
+    --discover \
+    --url "$controller_url" \
+    --api-key "$api_key" \
+    --is-udm "$is_udm" \
+    --verify-ssl "$verify_ssl")
+status=$?
+
+if [ $status -ne 0 ]; then
+    echo "Warning: could not discover sites ($sites_json)"
+    echo "Defaulting to 'all' sites."
+    selected_sites=""
+else
+    # Display sites and let user choose
+    echo ""
+    echo "Available sites:"
+    echo "$sites_json" | $python -c "
+import sys, json
+sites = json.load(sys.stdin)
+for i, s in enumerate(sites, 1):
+    name = s.get('name', '?')
+    desc = s.get('desc', name)
+    print('  {}: {} ({})'.format(i, desc, name))
+print('  A: All sites')
+"
+    echo ""
+    printf "Select sites (comma-separated numbers, or A for all) [A]: "
+    read site_choice
+    site_choice=${site_choice:-A}
+
+    case "$site_choice" in
+        [aA])
+            selected_sites=""
+            ;;
+        *)
+            # Convert user's number choices to site names via Python
+            selected_sites=$(echo "$sites_json" | $python -c "
+import sys, json
+sites = json.load(sys.stdin)
+choices = '$site_choice'.split(',')
+names = []
+for c in choices:
+    c = c.strip()
+    if c.isdigit():
+        idx = int(c) - 1
+        if 0 <= idx < len(sites):
+            names.append(sites[idx].get('name', ''))
+print(','.join(names))
+")
+            ;;
+    esac
+fi
+
+# ---------------------------------------------------------------------------
+# Generate config
+# ---------------------------------------------------------------------------
+echo ""
+echo "Generating configuration..."
+
+config_args="--generate-config --url $controller_url --api-key $api_key --is-udm $is_udm --verify-ssl $verify_ssl"
+if [ -n "$selected_sites" ]; then
+    config_args="$config_args --sites $selected_sites"
+fi
+
+config=$($python -m pcp_pmda_unifi.install_helper $config_args 2>&1)
+status=$?
+
+if [ $status -ne 0 ]; then
+    echo "Error generating config: $config"
+    exit 1
+fi
+
+# Write config with restrictive permissions (FR-024)
+echo "$config" > "$PCP_PMDAS_DIR/unifi/unifi.conf"
+chmod 0640 "$PCP_PMDAS_DIR/unifi/unifi.conf"
+chown root:pcp "$PCP_PMDAS_DIR/unifi/unifi.conf" 2>/dev/null
+
+echo "Configuration written to $PCP_PMDAS_DIR/unifi/unifi.conf"
+
+# ---------------------------------------------------------------------------
+# Register with PMCD
+# ---------------------------------------------------------------------------
+pmdaSetup
+pmdaInstall
+
+exit $?

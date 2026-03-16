@@ -1,0 +1,48 @@
+site_name: pcp-pmda-unifi
+site_description: UniFi network infrastructure PMDA for Performance Co-Pilot
+repo_url: https://github.com/tallpsmith/pmunifi
+docs_dir: .
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - search.highlight
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Configuration: configuration.md
+  - Metrics Reference: metrics.md
+  - Topology (unifi2dot): topology.md
+  - Architecture: architecture.md
+  - Grafana Dashboards: grafana.md
+  - Troubleshooting: troubleshooting.md
+  - Developer Guide: developer.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true

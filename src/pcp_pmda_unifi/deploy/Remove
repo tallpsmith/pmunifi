@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# pmdaunifi Remove script — deregisters the PMDA from PMCD.
+#
+# Intentionally does NOT delete unifi.conf so credentials survive
+# a remove/reinstall cycle.
+#
+
+. $PCP_DIR/etc/pcp.env
+. $PCP_SHARE_DIR/lib/pmdaproc.sh
+
+iam=unifi
+
+pmdaSetup
+pmdaRemove
+
+exit $?

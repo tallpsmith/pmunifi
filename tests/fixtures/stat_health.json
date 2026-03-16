@@ -1,0 +1,44 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "subsystem": "wan",
+      "status": "ok",
+      "num_gw": 1,
+      "num_adopted": 1,
+      "wan_ip": "203.0.113.42",
+      "latency": 12,
+      "rx_bytes-r": 15000000.0,
+      "tx_bytes-r": 8000000.0
+    },
+    {
+      "subsystem": "lan",
+      "status": "ok",
+      "num_sw": 1,
+      "num_adopted": 1,
+      "num_user": 15,
+      "num_guest": 3,
+      "rx_bytes-r": 5000000.0,
+      "tx_bytes-r": 3000000.0
+    },
+    {
+      "subsystem": "wlan",
+      "status": "ok",
+      "num_ap": 1,
+      "num_adopted": 1,
+      "num_user": 10,
+      "num_guest": 2,
+      "num_iot": 0,
+      "num_sta": 12,
+      "rx_bytes-r": 2000000.0,
+      "tx_bytes-r": 1500000.0
+    },
+    {
+      "subsystem": "vpn",
+      "status": "ok",
+      "remote_user_enabled": false,
+      "remote_user_num_active": 0,
+      "remote_user_num_inactive": 0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+# UniFi PCP PMDA configuration
+#
+# Copy this file to unifi.conf and edit to match your environment,
+# or let the Install script generate it interactively.
+#
+# File location: $PCP_PMDAS_DIR/unifi/unifi.conf
+# Ownership:     root:pcp, mode 0640
+
+[global]
+# Seconds between poll cycles (minimum 10)
+poll_interval = 30
+
+# Soft cap on tracked clients (0 = unlimited)
+max_clients = 1000
+
+# Seconds before pruning disappeared device/client instances
+grace_period = 300
+
+# Enable DPI category metrics (increases API calls)
+enable_dpi = false
+
+# Python logging level: debug, info, warning, error, critical
+# log_level = warning
+
+[controller:main]
+# Controller base URL (https required for production)
+url = https://192.168.1.1
+
+# UniFi API key — generate at Network > Settings > Control Plane > Integrations
+api_key = abc123-your-api-key-here
+
+# Sites to monitor: comma-separated site slugs, or 'all'
+sites = all
+
+# Set to true for UniFi OS devices (UDM, UDR, UCG-Ultra)
+# which prepend /proxy/network to API paths
+is_udm = true
+
+# SSL certificate verification — set to false for self-signed certs
+verify_ssl = true
+
+# Optional: path to custom CA certificate bundle
+# ca_cert = /etc/pki/tls/certs/unifi-ca.pem
+
+# Optional: per-controller poll interval override
+# poll_interval = 60
+
+# --- Multi-controller example ---
+#
+# [controller:branch]
+# url = https://10.0.0.1
+# api_key = def456-branch-api-key
+# sites = warehouse,office
+# is_udm = false
+# verify_ssl = false
+# poll_interval = 60

@@ -1,0 +1,193 @@
+{
+  "uid": "pcp-unifi-client-insights",
+  "title": "UniFi Client Insights",
+  "description": "Client traffic rankings, connection counts over time, and wired vs wireless breakdown",
+  "tags": ["pcp", "unifi"],
+  "editable": true,
+  "schemaVersion": 39,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "timezone": "browser",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PCP",
+        "type": "datasource",
+        "query": "pcp",
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "site_name",
+        "type": "query",
+        "datasource": { "uid": "${DS_PCP}" },
+        "query": "label_values(unifi.site.num_sta, site_name)",
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "sort": 1,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Top 10 Clients by Traffic",
+      "type": "table",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "left" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "RX Rate" },
+            "properties": [{ "id": "unit", "value": "Bps" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "TX Rate" },
+            "properties": [{ "id": "unit", "value": "Bps" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Signal" },
+            "properties": [{ "id": "unit", "value": "dBm" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Uptime" },
+            "properties": [{ "id": "unit", "value": "s" }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "RX Rate", "desc": true }]
+      },
+      "transformations": [
+        { "id": "merge", "options": {} },
+        { "id": "sortBy", "options": { "fields": {}, "sort": [{ "field": "Value #A", "desc": true }] } },
+        { "id": "limit", "options": { "limitField": 10 } },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "instance": "Client",
+              "Value #A": "RX Rate",
+              "Value #B": "TX Rate",
+              "Value #C": "Signal",
+              "Value #D": "Uptime",
+              "Value #E": "Network"
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(unifi.client.rx_bytes{site_name=\"$site_name\"})",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "rate(unifi.client.tx_bytes{site_name=\"$site_name\"})",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "C",
+          "expr": "unifi.client.signal{site_name=\"$site_name\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "D",
+          "expr": "unifi.client.uptime{site_name=\"$site_name\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "E",
+          "expr": "unifi.client.network{site_name=\"$site_name\"}",
+          "format": "table",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Client Count Over Time",
+      "type": "timeseries",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 20,
+            "stacking": { "mode": "normal" },
+            "showPoints": "never"
+          },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": { "tooltip": { "mode": "multi" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.num_user{site_name=\"$site_name\"}",
+          "legendFormat": "Users",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "unifi.site.num_guest{site_name=\"$site_name\"}",
+          "legendFormat": "Guests",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Wired vs Wireless Clients",
+      "type": "piechart",
+      "datasource": { "uid": "${DS_PCP}" },
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 12 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "palette-classic" },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["value", "percent"] }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "unifi.site.lan.num_user{site_name=\"$site_name\"}",
+          "legendFormat": "Wired",
+          "datasource": { "uid": "${DS_PCP}" }
+        },
+        {
+          "refId": "B",
+          "expr": "unifi.site.num_sta{site_name=\"$site_name\"} - unifi.site.lan.num_user{site_name=\"$site_name\"}",
+          "legendFormat": "Wireless",
+          "datasource": { "uid": "${DS_PCP}" }
+        }
+      ]
+    }
+  ]
+}

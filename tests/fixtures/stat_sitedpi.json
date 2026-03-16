@@ -1,0 +1,16 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "by_cat": [
+        {"cat": 0, "apps": [], "rx_bytes": 1000000, "tx_bytes": 500000, "rx_packets": 10000, "tx_packets": 5000},
+        {"cat": 3, "apps": [], "rx_bytes": 5000000, "tx_bytes": 2000000, "rx_packets": 40000, "tx_packets": 15000},
+        {"cat": 4, "apps": [], "rx_bytes": 20000000, "tx_bytes": 8000000, "rx_packets": 150000, "tx_packets": 60000},
+        {"cat": 5, "apps": [], "rx_bytes": 3000000, "tx_bytes": 1000000, "rx_packets": 25000, "tx_packets": 8000},
+        {"cat": 13, "apps": [], "rx_bytes": 50000000, "tx_bytes": 15000000, "rx_packets": 350000, "tx_packets": 100000},
+        {"cat": 18, "apps": [], "rx_bytes": 8000000, "tx_bytes": 4000000, "rx_packets": 60000, "tx_packets": 30000},
+        {"cat": 20, "apps": [], "rx_bytes": 2000000, "tx_bytes": 1500000, "rx_packets": 18000, "tx_packets": 12000}
+      ]
+    }
+  ]
+}

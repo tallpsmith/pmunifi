@@ -1,0 +1,12 @@
+{
+  "meta": {"rc": "ok"},
+  "data": [
+    {
+      "version": "9.0.114",
+      "build": "atag_9.0.114_12345",
+      "hostname": "unifi-controller",
+      "name": "UniFi Network",
+      "ip_addrs": ["192.168.1.1"]
+    }
+  ]
+}

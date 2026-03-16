@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pcp-pmda-unifi"
+dynamic = ["version"]
+description = "PCP PMDA for Ubiquiti UniFi network infrastructure monitoring"
+readme = "README.md"
+license = "GPL-2.0-or-later"
+requires-python = ">=3.8"
+authors = [
+    { name = "pmdaunifi contributors" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: No Input/Output (Daemon)",
+    "Intended Audience :: System Administrators",
+"Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Networking :: Monitoring",
+]
+dependencies = [
+    "requests>=2.20",
+]
+
+[project.scripts]
+unifi2dot = "pcp_pmda_unifi.cli:main"
+pcp-pmda-unifi-setup = "pcp_pmda_unifi.setup:main"
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-cov", "pytest-ordering", "flask", "cryptography"]
+dev = ["ruff", "mypy", "build", "twine", "hatch-vcs"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/pcp_pmda_unifi/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pcp_pmda_unifi"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/pcp_pmda_unifi", "man/", "packaging/", "LICENSE", "README.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-markers"]
+markers = [
+    "unit: fast isolated tests",
+    "integration: tests requiring PCP bindings and mock HTTP",
+    "e2e: end-to-end tests requiring PCP installation",
+    "order: control test execution order (pytest-ordering)",
+]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+exclude = ["src/pcp_pmda_unifi/_version.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
