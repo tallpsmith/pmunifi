@@ -1,4 +1,4 @@
-"""T017, T018, T030-T033: Integration tests for the UniFi PMDA fetch callbacks.
+"""T017, T018, T030-T033, T051-T055: Integration tests for the UniFi PMDA fetch callbacks.
 
 These tests validate metric registration and fetch callback behaviour.
 Since PCP Python bindings (pcp.pmda) are unlikely to be installed on
@@ -40,6 +40,18 @@ except ImportError:
 try:
     from pcp_pmda_unifi.pmda import CLIENT_METRICS as _CM
     _CLIENT_METRICS = _CM
+except ImportError:
+    pass
+_POE_METRICS = None
+try:
+    from pcp_pmda_unifi.pmda import POE_METRICS as _PM
+    _POE_METRICS = _PM
+except ImportError:
+    pass
+_AP_RADIO_METRICS = None
+try:
+    from pcp_pmda_unifi.pmda import AP_RADIO_METRICS as _ARM
+    _AP_RADIO_METRICS = _ARM
 except ImportError:
     pass
 
@@ -408,3 +420,113 @@ class TestClientMetricRegistration:
         assert _CLIENT_METRICS is not None
         item_ids = [m[1] for m in _CLIENT_METRICS]
         assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in CLIENT_METRICS"
+
+
+# ---------------------------------------------------------------------------
+# T051: PoE metric registration (cluster 3)
+# ---------------------------------------------------------------------------
+
+
+class TestPoEMetricRegistration:
+    """Cluster 3: all 6 PoE metrics sharing switch_port indom."""
+
+    def test_poe_metrics_list_exists(self):
+        """POE_METRICS must be importable from pmda module."""
+        assert _POE_METRICS is not None, "POE_METRICS not exported from pmda"
+
+    def test_poe_metrics_count(self):
+        """Exactly 6 PoE metrics per the data model."""
+        assert _POE_METRICS is not None
+        assert len(_POE_METRICS) == 6
+
+    def test_poe_metrics_have_required_fields(self):
+        """Each metric tuple has (name, item, type, sem, attr_name)."""
+        assert _POE_METRICS is not None
+        for metric in _POE_METRICS:
+            assert len(metric) == 5, f"Metric {metric[0]} has wrong tuple length"
+
+    def test_poe_metric_names_are_namespaced(self):
+        """All PoE metrics live under unifi.switch.port.poe.*"""
+        assert _POE_METRICS is not None
+        for metric in _POE_METRICS:
+            name = metric[0]
+            assert name.startswith("unifi.switch.port.poe."), (
+                f"Metric {name} not under unifi.switch.port.poe"
+            )
+
+    def test_poe_metric_names_match_data_model(self):
+        """All 6 metric names from the data model are present."""
+        assert _POE_METRICS is not None
+        expected_names = {
+            "unifi.switch.port.poe.enable",
+            "unifi.switch.port.poe.good",
+            "unifi.switch.port.poe.power",
+            "unifi.switch.port.poe.voltage",
+            "unifi.switch.port.poe.current",
+            "unifi.switch.port.poe.class",
+        }
+        actual_names = {m[0] for m in _POE_METRICS}
+        assert actual_names == expected_names
+
+    def test_poe_item_ids_are_unique(self):
+        """Item IDs within the cluster must not collide."""
+        assert _POE_METRICS is not None
+        item_ids = [m[1] for m in _POE_METRICS]
+        assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in POE_METRICS"
+
+
+# ---------------------------------------------------------------------------
+# T053: AP radio metric registration (cluster 5)
+# ---------------------------------------------------------------------------
+
+
+class TestApRadioMetricRegistration:
+    """Cluster 5: all 10 AP radio metrics from data-model.md."""
+
+    def test_ap_radio_metrics_list_exists(self):
+        """AP_RADIO_METRICS must be importable from pmda module."""
+        assert _AP_RADIO_METRICS is not None, "AP_RADIO_METRICS not exported from pmda"
+
+    def test_ap_radio_metrics_count(self):
+        """Exactly 10 AP radio metrics per the data model."""
+        assert _AP_RADIO_METRICS is not None
+        assert len(_AP_RADIO_METRICS) == 10
+
+    def test_ap_radio_metrics_have_required_fields(self):
+        """Each metric tuple has (name, item, type, sem, attr_name)."""
+        assert _AP_RADIO_METRICS is not None
+        for metric in _AP_RADIO_METRICS:
+            assert len(metric) == 5, f"Metric {metric[0]} has wrong tuple length"
+
+    def test_ap_radio_metric_names_are_namespaced(self):
+        """All AP radio metrics live under unifi.ap.*"""
+        assert _AP_RADIO_METRICS is not None
+        for metric in _AP_RADIO_METRICS:
+            name = metric[0]
+            assert name.startswith("unifi.ap."), (
+                f"Metric {name} not under unifi.ap"
+            )
+
+    def test_ap_radio_metric_names_match_data_model(self):
+        """All 10 metric names from the data model are present."""
+        assert _AP_RADIO_METRICS is not None
+        expected_names = {
+            "unifi.ap.channel",
+            "unifi.ap.radio_type",
+            "unifi.ap.rx_bytes",
+            "unifi.ap.tx_bytes",
+            "unifi.ap.rx_packets",
+            "unifi.ap.tx_packets",
+            "unifi.ap.tx_dropped",
+            "unifi.ap.tx_retries",
+            "unifi.ap.num_sta",
+            "unifi.ap.satisfaction",
+        }
+        actual_names = {m[0] for m in _AP_RADIO_METRICS}
+        assert actual_names == expected_names
+
+    def test_ap_radio_item_ids_are_unique(self):
+        """Item IDs within the cluster must not collide."""
+        assert _AP_RADIO_METRICS is not None
+        item_ids = [m[1] for m in _AP_RADIO_METRICS]
+        assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in AP_RADIO_METRICS"

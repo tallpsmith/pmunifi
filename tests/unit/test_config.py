@@ -225,3 +225,81 @@ api_key = some-key
 """
         with pytest.raises(ValueError, match="(?i)name"):
             parse_config(ini)
+
+
+# ---------------------------------------------------------------------------
+# US8 / T056: Multi-controller config — independent fields per controller
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestMultiControllerConfig:
+    """Each [controller:NAME] section produces an independent ControllerConfig
+    with its own url, api_key, sites, is_udm, verify_ssl, ca_cert, and
+    poll_interval.  No bleeding between sections.
+    """
+
+    MULTI_INI = """\
+[global]
+poll_interval = 30
+
+[controller:hq]
+url = https://10.0.0.1
+api_key = ak-hq-secret
+sites = all
+is_udm = true
+verify_ssl = true
+
+[controller:branch]
+url = https://10.1.0.1
+api_key = ak-branch-secret
+sites = warehouse,office
+is_udm = false
+verify_ssl = false
+ca_cert = /etc/ssl/branch.pem
+poll_interval = 60
+"""
+
+    def test_two_controllers_are_parsed(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert len(cfg.controllers) == 2
+
+    def test_controllers_have_independent_urls(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].url == "https://10.0.0.1"
+        assert cfg.controllers["branch"].url == "https://10.1.0.1"
+
+    def test_controllers_have_independent_api_keys(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].api_key == "ak-hq-secret"
+        assert cfg.controllers["branch"].api_key == "ak-branch-secret"
+
+    def test_controllers_have_independent_sites(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].sites == ["all"]
+        assert cfg.controllers["branch"].sites == ["warehouse", "office"]
+
+    def test_controllers_have_independent_is_udm(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].is_udm is True
+        assert cfg.controllers["branch"].is_udm is False
+
+    def test_controllers_have_independent_verify_ssl(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].verify_ssl is True
+        assert cfg.controllers["branch"].verify_ssl is False
+
+    def test_controllers_have_independent_ca_cert(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].ca_cert is None
+        assert cfg.controllers["branch"].ca_cert == "/etc/ssl/branch.pem"
+
+    def test_per_controller_poll_interval_override(self):
+        """Branch overrides to 60s; hq inherits None (uses global at runtime)."""
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.controllers["hq"].poll_interval is None
+        assert cfg.controllers["branch"].poll_interval == 60
+
+    def test_global_poll_interval_untouched_by_controller_override(self):
+        cfg = parse_config(self.MULTI_INI)
+        assert cfg.global_settings.poll_interval == 30

@@ -196,11 +196,11 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T051 [P] [US6] Write failing tests for PoE metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 3 metrics (poe.enable, poe.good, poe.power, poe.voltage, poe.current, poe.class), PoE-disabled port reports enable=0 and power/voltage/current=0, PoE fields extracted correctly from port_table
+- [x] T051 [P] [US6] Write failing tests for PoE metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 3 metrics (poe.enable, poe.good, poe.power, poe.voltage, poe.current, poe.class), PoE-disabled port reports enable=0 and power/voltage/current=0, PoE fields extracted correctly from port_table
 
 ### Implementation for User Story 6
 
-- [ ] T052 [US6] Register PoE metrics (cluster 3) in `src/pcp_pmda_unifi/pmda.py`: register 6 PoE metrics per data-model.md on switch_port indom, extend fetch_callback for cluster 3, PoE-disabled ports return zero values
+- [x] T052 [US6] Register PoE metrics (cluster 3) in `src/pcp_pmda_unifi/pmda.py`: register 6 PoE metrics per data-model.md on switch_port indom, extend fetch_callback for cluster 3, PoE-disabled ports return zero values
 
 **Checkpoint**: `pminfo -f unifi.switch.port.poe.power` shows per-port power draw. `poe.class` returns PoE class string.
 
@@ -216,12 +216,12 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T053 [P] [US7] Write failing tests for AP radio metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 5 metrics (channel, radio_type, rx_bytes, tx_bytes, rx_packets, tx_packets, tx_dropped, tx_retries, num_sta, satisfaction), ap_radio indom populated from radio_table, labels (device_mac, device_type, device_model)
+- [x] T053 [P] [US7] Write failing tests for AP radio metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 5 metrics (channel, radio_type, rx_bytes, tx_bytes, rx_packets, tx_packets, tx_dropped, tx_retries, num_sta, satisfaction), ap_radio indom populated from radio_table, labels (device_mac, device_type, device_model)
 
 ### Implementation for User Story 7
 
-- [ ] T054 [US7] Register AP radio metrics (cluster 5) in `src/pcp_pmda_unifi/pmda.py`: add ap_radio indom (dict-based), register all 10 AP metrics per data-model.md, extend fetch_callback for cluster 5, extend label_callback for ap_radio instances
-- [ ] T055 [US7] Extend snapshot building in `src/pcp_pmda_unifi/snapshot.py`: extract `radio_table` from AP devices into `RadioData` list within `DeviceData`, populate ap_radio instances via `ap_radio_instance_name()`
+- [x] T054 [US7] Register AP radio metrics (cluster 5) in `src/pcp_pmda_unifi/pmda.py`: add ap_radio indom (dict-based), register all 10 AP metrics per data-model.md, extend fetch_callback for cluster 5, extend label_callback for ap_radio instances
+- [x] T055 [US7] Extend snapshot building in `src/pcp_pmda_unifi/snapshot.py`: extract `radio_table` from AP devices into `RadioData` list within `DeviceData`, populate ap_radio instances via `ap_radio_instance_name()`
 
 **Checkpoint**: `pminfo -f unifi.ap.num_sta` shows per-radio client counts. All 10 AP metrics populated.
 
@@ -237,14 +237,14 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T056 [P] [US8] Write failing tests for multi-controller config in `tests/unit/test_config.py`: parse multiple `[controller:NAME]` sections, each with independent url/api_key/sites/is_udm/poll_interval
-- [ ] T057 [P] [US8] Write failing tests for multi-controller instance naming in `tests/unit/test_instances.py`: two controllers with same site name "default" produce distinct instance names (`hq/default/...` vs `branch/default/...`), instance name filtering with regex works (`hq/.*`)
-- [ ] T058 [P] [US8] Write failing tests for multi-controller poller in `tests/integration/test_poller.py`: PMDA starts one poller thread per `[controller:NAME]` section, each poller builds independent snapshots, snapshot merge produces unified instance domains, pollers run on independent intervals
+- [x] T056 [P] [US8] Write failing tests for multi-controller config in `tests/unit/test_config.py`: parse multiple `[controller:NAME]` sections, each with independent url/api_key/sites/is_udm/poll_interval
+- [x] T057 [P] [US8] Write failing tests for multi-controller instance naming in `tests/unit/test_instances.py`: two controllers with same site name "default" produce distinct instance names (`hq/default/...` vs `branch/default/...`), instance name filtering with regex works (`hq/.*`)
+- [x] T058 [P] [US8] Write failing tests for multi-controller poller in `tests/integration/test_poller.py`: PMDA starts one poller thread per `[controller:NAME]` section, each poller builds independent snapshots, snapshot merge produces unified instance domains, pollers run on independent intervals
 
 ### Implementation for User Story 8
 
-- [ ] T059 [US8] Extend PMDA startup in `src/pcp_pmda_unifi/pmda.py`: iterate config controller sections, start one `ControllerPoller` thread per section, merge snapshots from all pollers into unified instance domains during pre-fetch
-- [ ] T060 [US8] Extend poller for multi-controller in `src/pcp_pmda_unifi/poller.py`: each poller owns its controller name, passes it to instance naming functions, independent poll intervals from per-controller config
+- [x] T059 [US8] Extend PMDA startup in `src/pcp_pmda_unifi/pmda.py`: iterate config controller sections, start one `ControllerPoller` thread per section, merge snapshots from all pollers into unified instance domains during pre-fetch
+- [x] T060 [US8] Extend poller for multi-controller in `src/pcp_pmda_unifi/poller.py`: each poller owns its controller name, passes it to instance naming functions, independent poll intervals from per-controller config
 
 **Checkpoint**: Two mock controllers configured, `pminfo -f unifi.switch.port.rx_bytes` shows instances from both with distinct prefixes. No instance name collisions.
 

@@ -137,3 +137,55 @@ class TestDpiCategoryInstanceName:
             dpi_category_instance_name("main", "default", "Streaming")
             == "main/default/Streaming"
         )
+
+
+# ---------------------------------------------------------------------------
+# US8 / T057: Multi-controller naming — distinct prefixes avoid collisions
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestMultiControllerNaming:
+    """Two controllers ('hq' and 'branch') with the same site produce
+    distinct instance names across every indom type.
+    """
+
+    def test_site_names_are_distinct(self):
+        hq = site_instance_name("hq", "default")
+        branch = site_instance_name("branch", "default")
+        assert hq != branch
+        assert hq == "hq/default"
+        assert branch == "branch/default"
+
+    def test_device_names_are_distinct(self):
+        hq = device_instance_name("hq", "default", "SwitchA")
+        branch = device_instance_name("branch", "default", "SwitchB")
+        assert hq != branch
+        assert hq == "hq/default/SwitchA"
+        assert branch == "branch/default/SwitchB"
+
+    def test_same_device_name_different_controller_is_distinct(self):
+        """Even identical device names are disambiguated by controller prefix."""
+        hq = device_instance_name("hq", "default", "USW-Pro-48")
+        branch = device_instance_name("branch", "default", "USW-Pro-48")
+        assert hq != branch
+
+    def test_switch_port_names_are_distinct(self):
+        hq = switch_port_instance_name("hq", "default", "SwitchA", 1)
+        branch = switch_port_instance_name("branch", "default", "SwitchB", 1)
+        assert hq != branch
+        assert hq == "hq/default/SwitchA::Port1"
+        assert branch == "branch/default/SwitchB::Port1"
+
+    def test_client_names_are_distinct(self):
+        hq = client_instance_name("hq", "default", "laptop-alice")
+        branch = client_instance_name("branch", "default", "laptop-alice")
+        assert hq != branch
+
+    def test_gateway_names_are_distinct(self):
+        hq = gateway_instance_name("hq", "default", "UDM-Pro")
+        branch = gateway_instance_name("branch", "default", "UDM-Pro")
+        assert hq != branch
+
+    def test_controller_names_are_distinct(self):
+        assert controller_instance_name("hq") != controller_instance_name("branch")

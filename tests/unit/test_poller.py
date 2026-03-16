@@ -306,3 +306,112 @@ class TestPollerLifecycle:
         poller.stop()
         poller.join(timeout=2)
         assert poller.snapshot is not None
+
+
+# ---------------------------------------------------------------------------
+# US8 / T058: Multi-controller poller — independent pollers, distinct snapshots
+# ---------------------------------------------------------------------------
+
+
+def _make_mock_client_for(device_name="USW-Test", device_mac="aa:bb:cc:dd:ee:ff"):
+    """Build a mock UnifiClient with a configurable device identity."""
+    client = MagicMock()
+    client.fetch_devices.return_value = [
+        {
+            "mac": device_mac,
+            "name": device_name,
+            "type": "usw",
+            "port_table": [
+                {"port_idx": 1, "rx_bytes": 100, "tx_bytes": 200, "up": True},
+            ],
+        },
+    ]
+    client.fetch_clients.return_value = [
+        {"mac": "11:22:33:44:55:66", "hostname": "laptop-test", "is_wired": True},
+    ]
+    client.fetch_health.return_value = [
+        {"subsystem": "wan", "status": "ok"},
+    ]
+    return client
+
+
+@pytest.mark.unit
+class TestMultiControllerPoller:
+    """Two ControllerPoller instances with different names produce independent
+    snapshots tagged with their respective controller_name values.
+    """
+
+    def test_pollers_have_distinct_controller_names(self):
+        hq_client = _make_mock_client_for("HQ-Switch", "aa:bb:cc:00:00:01")
+        branch_client = _make_mock_client_for("Branch-Switch", "aa:bb:cc:00:00:02")
+        hq = ControllerPoller("hq", hq_client, sites=["default"])
+        branch = ControllerPoller("branch", branch_client, sites=["default"])
+        assert hq.controller_name == "hq"
+        assert branch.controller_name == "branch"
+
+    def test_snapshots_have_distinct_controller_names(self):
+        hq_client = _make_mock_client_for("HQ-Switch", "aa:bb:cc:00:00:01")
+        branch_client = _make_mock_client_for("Branch-Switch", "aa:bb:cc:00:00:02")
+        hq = ControllerPoller("hq", hq_client, sites=["default"])
+        branch = ControllerPoller("branch", branch_client, sites=["default"])
+        hq.poll_once()
+        branch.poll_once()
+        assert hq.snapshot.controller_name == "hq"
+        assert branch.snapshot.controller_name == "branch"
+
+    def test_snapshots_contain_independent_device_data(self):
+        """Each poller's snapshot should contain its own devices, not the other's."""
+        hq_client = _make_mock_client_for("HQ-Switch", "aa:bb:cc:00:00:01")
+        branch_client = _make_mock_client_for("Branch-Switch", "aa:bb:cc:00:00:02")
+        hq = ControllerPoller("hq", hq_client, sites=["default"])
+        branch = ControllerPoller("branch", branch_client, sites=["default"])
+        hq.poll_once()
+        branch.poll_once()
+
+        hq_devices = list(hq.snapshot.sites["default"].devices.values())
+        branch_devices = list(branch.snapshot.sites["default"].devices.values())
+        assert hq_devices[0].meta.name == "HQ-Switch"
+        assert branch_devices[0].meta.name == "Branch-Switch"
+
+    def test_independent_poll_intervals(self):
+        """Each poller can have its own poll interval."""
+        hq = ControllerPoller("hq", _make_mock_client(), sites=["default"], poll_interval=30)
+        branch = ControllerPoller("branch", _make_mock_client(), sites=["default"], poll_interval=60)
+        assert hq.poll_interval == 30
+        assert branch.poll_interval == 60
+
+    def test_error_in_one_poller_does_not_affect_the_other(self):
+        """A failure in one poller should not corrupt the other's snapshot."""
+        hq_client = _make_mock_client_for("HQ-Switch", "aa:bb:cc:00:00:01")
+        branch_client = _make_mock_client_for("Branch-Switch", "aa:bb:cc:00:00:02")
+
+        hq = ControllerPoller("hq", hq_client, sites=["default"])
+        branch = ControllerPoller("branch", branch_client, sites=["default"])
+
+        # Both poll successfully first
+        hq.poll_once()
+        branch.poll_once()
+
+        # HQ blows up; branch stays fine
+        hq_client.fetch_devices.side_effect = ConnectionError("hq is on fire")
+        hq.poll_once()
+        branch.poll_once()
+
+        assert hq.controller_health["up"] == 0
+        assert branch.controller_health["up"] == 1
+        assert branch.snapshot.controller_name == "branch"
+
+    def test_controller_health_reports_are_independent(self):
+        hq_client = _make_mock_client_for("HQ-Switch", "aa:bb:cc:00:00:01")
+        branch_client = _make_mock_client_for("Branch-Switch", "aa:bb:cc:00:00:02")
+
+        hq = ControllerPoller("hq", hq_client, sites=["default"])
+        branch = ControllerPoller("branch", branch_client, sites=["default"])
+
+        hq.poll_once()
+        branch.poll_once()
+
+        # Both healthy, distinct reports
+        assert hq.controller_health["up"] == 1
+        assert branch.controller_health["up"] == 1
+        assert hq.controller_health is not branch.controller_health
