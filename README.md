@@ -1,5 +1,7 @@
 # pcp-pmda-unifi
 
+[![CI](https://github.com/tallpsmith/pmunifi/actions/workflows/ci.yml/badge.svg)](https://github.com/tallpsmith/pmunifi/actions/workflows/ci.yml)
+
 A [Performance Co-Pilot](https://pcp.io) PMDA that exports Ubiquiti UniFi
 network infrastructure metrics — switch ports, devices, gateways, APs,
 clients, and more — through the standard PCP toolchain.
@@ -45,14 +47,17 @@ pmrep -t 5 unifi.switch.port.rx_bytes unifi.switch.port.tx_bytes
 
 ## Documentation
 
-Full documentation is available at the [project docs site](docs/):
+Full documentation is published via GitHub Pages at
+**[tallpsmith.github.io/pmunifi](https://tallpsmith.github.io/pmunifi/)** —
+built automatically from the `docs/` directory on every push to `main` using
+[MkDocs Material](https://squidfunk.github.io/mkdocs-material/).
 
-- [Getting Started](docs/getting-started.md) — install and verify in 5 minutes
-- [Configuration](docs/configuration.md) — config file reference
-- [Metrics Reference](docs/metrics.md) — every metric with type and semantics
-- [Grafana Dashboards](docs/grafana.md) — pre-built dashboards for pmproxy
-- [Architecture](docs/architecture.md) — design decisions and internals
-- [Troubleshooting](docs/troubleshooting.md) — common problems and fixes
+- [Getting Started](https://tallpsmith.github.io/pmunifi/getting-started/) — install and verify in 5 minutes
+- [Configuration](https://tallpsmith.github.io/pmunifi/configuration/) — config file reference
+- [Metrics Reference](https://tallpsmith.github.io/pmunifi/metrics/) — every metric with type and semantics
+- [Grafana Dashboards](https://tallpsmith.github.io/pmunifi/grafana/) — pre-built dashboards for pmproxy
+- [Architecture](https://tallpsmith.github.io/pmunifi/architecture/) — design decisions and internals
+- [Troubleshooting](https://tallpsmith.github.io/pmunifi/troubleshooting/) — common problems and fixes
 
 ## Grafana Dashboards
 
