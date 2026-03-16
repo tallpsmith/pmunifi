@@ -97,15 +97,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T024 [P] [US2] Write failing tests for Install script logic in `tests/integration/test_deploy.py`: connectivity validation (success + auth failure), site discovery listing, config file generation with correct ownership/permissions, non-interactive mode via env vars (`./Install -e`), upgrade mode (`./Install -u`) preserves existing config
-- [ ] T025 [P] [US2] Write failing tests for setup command in `tests/integration/test_deploy.py`: `pcp-pmda-unifi-setup install` copies deploy assets to target dir, generates PMDA launcher script, sets correct file permissions
+- [x] T024 [P] [US2] Write failing tests for Install script logic in `tests/integration/test_deploy.py`: connectivity validation (success + auth failure), site discovery listing, config file generation with correct ownership/permissions, non-interactive mode via env vars (`./Install -e`), upgrade mode (`./Install -u`) preserves existing config
+- [x] T025 [P] [US2] Write failing tests for setup command in `tests/integration/test_deploy.py`: `pcp-pmda-unifi-setup install` copies deploy assets to target dir, generates PMDA launcher script, sets correct file permissions
 
 ### Implementation for User Story 2
 
-- [ ] T026 [P] [US2] Create Install shell script in `src/pcp_pmda_unifi/deploy/Install`: source `pmdaproc.sh`, set `iam=unifi`, `python_opt=true`, `daemon_opt=false`; before `pmdaSetup`: interactive prompts for URL, is_udm, API key; call Python helper to validate connectivity and discover sites; site selection prompt; detect self-signed certificate during connectivity test and prompt with security warning offering to set `verify_ssl = false`; write `unifi.conf` with `root:pcp` 0640; support `-e` (env var) and `-u` (upgrade) flags
-- [ ] T027 [P] [US2] Create Remove shell script in `src/pcp_pmda_unifi/deploy/Remove`: source `pmdaproc.sh`, `pmdaRemove`; preserve `unifi.conf`
-- [ ] T028 [P] [US2] Create sample config in `src/pcp_pmda_unifi/deploy/unifi.conf.sample` per contracts/configuration.md example
-- [ ] T029 [US2] Implement setup command in `src/pcp_pmda_unifi/setup.py`: `main()` entry point for `pcp-pmda-unifi-setup`, copies deploy assets from package data (via `importlib.resources`) to `$PCP_PMDAS_DIR/unifi/`, generates PMDA launcher script (`pmda_unifi.python`) that imports from site-packages, sets permissions
+- [x] T026 [P] [US2] Create Install shell script in `src/pcp_pmda_unifi/deploy/Install`: source `pmdaproc.sh`, set `iam=unifi`, `python_opt=true`, `daemon_opt=false`; before `pmdaSetup`: interactive prompts for URL, is_udm, API key; call Python helper to validate connectivity and discover sites; site selection prompt; detect self-signed certificate during connectivity test and prompt with security warning offering to set `verify_ssl = false`; write `unifi.conf` with `root:pcp` 0640; support `-e` (env var) and `-u` (upgrade) flags
+- [x] T027 [P] [US2] Create Remove shell script in `src/pcp_pmda_unifi/deploy/Remove`: source `pmdaproc.sh`, `pmdaRemove`; preserve `unifi.conf`
+- [x] T028 [P] [US2] Create sample config in `src/pcp_pmda_unifi/deploy/unifi.conf.sample` per contracts/configuration.md example
+- [x] T029 [US2] Implement setup command in `src/pcp_pmda_unifi/setup.py`: `main()` entry point for `pcp-pmda-unifi-setup`, copies deploy assets from package data (via `importlib.resources`) to `$PCP_PMDAS_DIR/unifi/`, generates PMDA launcher script (`pmda_unifi.python`) that imports from site-packages, sets permissions
 
 **Checkpoint**: `pip install -e . && sudo pcp-pmda-unifi-setup install && cd /var/lib/pcp/pmdas/unifi && sudo ./Install` works end-to-end with a mock controller. Config written, PMDA registered, metrics flowing.
 
