@@ -148,15 +148,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T039 [P] [US4] Write failing tests for client metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 4 metrics (hostname, ip, mac, oui, is_wired, sw_mac, sw_port, rx_bytes, tx_bytes, rx_packets, tx_packets, uptime, signal, network, last_seen), client indom populated, PM_ERR_VALUE for signal on wired clients
-- [ ] T040 [P] [US4] Write failing tests for cardinality cap in `tests/unit/test_instances.py`: max_clients=0 tracks all, max_clients=5 keeps top 5 by traffic, log warning when cap active, clients sorted by (rx_bytes + tx_bytes) descending
-- [ ] T041 [P] [US4] Write failing tests for client pruning in `tests/unit/test_instances.py`: client disappears from API response, grace period countdown, pruned after expiry, re-appears during grace period resets timer
+- [x] T039 [P] [US4] Write failing tests for client metric fetch in `tests/integration/test_pmda_fetch.py`: cluster 4 metrics (hostname, ip, mac, oui, is_wired, sw_mac, sw_port, rx_bytes, tx_bytes, rx_packets, tx_packets, uptime, signal, network, last_seen), client indom populated, PM_ERR_VALUE for signal on wired clients
+- [x] T040 [P] [US4] Write failing tests for cardinality cap in `tests/unit/test_instances.py`: max_clients=0 tracks all, max_clients=5 keeps top 5 by traffic, log warning when cap active, clients sorted by (rx_bytes + tx_bytes) descending
+- [x] T041 [P] [US4] Write failing tests for client pruning in `tests/unit/test_instances.py`: client disappears from API response, grace period countdown, pruned after expiry, re-appears during grace period resets timer
 
 ### Implementation for User Story 4
 
-- [ ] T042 [US4] Register client metrics (cluster 4) in `src/pcp_pmda_unifi/pmda.py`: add client indom (dict-based), register all 15 client metrics per data-model.md with correct types/semantics, extend fetch_callback for cluster 4 (PM_ERR_VALUE for signal on wired clients), extend label_callback for client instances
-- [ ] T043 [US4] Implement cardinality cap in `src/pcp_pmda_unifi/snapshot.py`: sort clients by (rx_bytes + tx_bytes) descending, cap at `max_clients` if > 0, log warning when capping active (FR-009)
-- [ ] T044 [US4] Extend grace period pruning in `src/pcp_pmda_unifi/instances.py`: apply client-specific pruning with same grace_period logic as devices
+- [x] T042 [US4] Register client metrics (cluster 4) in `src/pcp_pmda_unifi/pmda.py`: add client indom (dict-based), register all 15 client metrics per data-model.md with correct types/semantics, extend fetch_callback for cluster 4 (PM_ERR_VALUE for signal on wired clients), extend label_callback for client instances
+- [x] T043 [US4] Implement cardinality cap in `src/pcp_pmda_unifi/snapshot.py`: sort clients by (rx_bytes + tx_bytes) descending, cap at `max_clients` if > 0, log warning when capping active (FR-009)
+- [x] T044 [US4] Extend grace period pruning in `src/pcp_pmda_unifi/instances.py`: apply client-specific pruning with same grace_period logic as devices
 
 **Checkpoint**: `pminfo -f unifi.client.hostname` shows clients. Cardinality cap works. Disconnected clients pruned after grace period.
 
@@ -172,15 +172,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T045 [P] [US5] Write failing tests for topology discovery in `tests/unit/test_topology.py`: build MAC-to-device lookup, discover links from uplink fields (uplink.mac → parent device, uplink.port_idx → parent port), classify ports (device link vs leaf vs empty), handle orphan devices (no uplink), handle missing uplink fields gracefully
-- [ ] T046 [P] [US5] Write failing tests for graph export in `tests/unit/test_topology.py`: DOT output is valid Graphviz syntax, nodes have device name/model/type attributes, edges have port labels and `unifi.switch.port.*` instance name references, JSON output has nodes/edges arrays with same data
-- [ ] T047 [P] [US5] Write failing tests for CLI in `tests/unit/test_cli.py`: `--url`, `--api-key`, `--site` required args, `--format dot` (default) and `--format json`, `-o` output file (default stdout), `--is-udm` flag, `--verify-ssl` flag
+- [x] T045 [P] [US5] Write failing tests for topology discovery in `tests/unit/test_topology.py`: build MAC-to-device lookup, discover links from uplink fields (uplink.mac → parent device, uplink.port_idx → parent port), classify ports (device link vs leaf vs empty), handle orphan devices (no uplink), handle missing uplink fields gracefully
+- [x] T046 [P] [US5] Write failing tests for graph export in `tests/unit/test_topology.py`: DOT output is valid Graphviz syntax, nodes have device name/model/type attributes, edges have port labels and `unifi.switch.port.*` instance name references, JSON output has nodes/edges arrays with same data
+- [x] T047 [P] [US5] Write failing tests for CLI in `tests/unit/test_cli.py`: `--url`, `--api-key`, `--site` required args, `--format dot` (default) and `--format json`, `-o` output file (default stdout), `--is-udm` flag, `--verify-ssl` flag
 
 ### Implementation for User Story 5
 
-- [ ] T048 [US5] Implement topology discovery in `src/pcp_pmda_unifi/topology.py`: `discover_topology(devices)` builds MAC-to-device lookup, walks uplink fields to build adjacency list, returns list of `TopologyLink(src_device, src_port, dst_device, dst_port, speed)` dataclasses
-- [ ] T049 [US5] Implement graph export in `src/pcp_pmda_unifi/topology.py`: `to_dot(links, devices)` outputs valid Graphviz DOT with device nodes and link edges annotated with PMDA instance names; `to_json(links, devices)` outputs `{"nodes": [...], "edges": [...]}` structure
-- [ ] T050 [US5] Implement CLI entry point in `src/pcp_pmda_unifi/cli.py`: argparse with `--url`, `--api-key`, `--site`, `--format {dot,json}`, `-o`, `--is-udm`, `--verify-ssl`/`--no-verify-ssl`; creates `UnifiClient`, fetches devices, runs `discover_topology()`, outputs via `to_dot()` or `to_json()`
+- [x] T048 [US5] Implement topology discovery in `src/pcp_pmda_unifi/topology.py`: `discover_topology(devices)` builds MAC-to-device lookup, walks uplink fields to build adjacency list, returns list of `TopologyLink(src_device, src_port, dst_device, dst_port, speed)` dataclasses
+- [x] T049 [US5] Implement graph export in `src/pcp_pmda_unifi/topology.py`: `to_dot(links, devices)` outputs valid Graphviz DOT with device nodes and link edges annotated with PMDA instance names; `to_json(links, devices)` outputs `{"nodes": [...], "edges": [...]}` structure
+- [x] T050 [US5] Implement CLI entry point in `src/pcp_pmda_unifi/cli.py`: argparse with `--url`, `--api-key`, `--site`, `--format {dot,json}`, `-o`, `--is-udm`, `--verify-ssl`/`--no-verify-ssl`; creates `UnifiClient`, fetches devices, runs `discover_topology()`, outputs via `to_dot()` or `to_json()`
 
 **Checkpoint**: `unifi2dot --url https://mock --api-key test --site default | dot -Tpng -o topo.png` produces a valid topology graph. JSON output parseable by D3.js.
 

@@ -14,6 +14,7 @@ from pcp_pmda_unifi.snapshot import (
     PortData,
     RadioData,
     Snapshot,
+    _sort_clients_by_traffic,
     build_snapshot_from_api,
 )
 
@@ -243,6 +244,98 @@ class TestDefaults:
         snap = _build([{"mac": "aa:bb:cc:00:00:01", "type": "usw"}])
         device = list(snap.sites["default"].devices.values())[0]
         assert device.gateway is None
+
+
+# ---------------------------------------------------------------------------
+# T040: Client sorting by traffic
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestClientSorting:
+    """Clients are sorted by total traffic (rx + tx bytes) descending."""
+
+    def test_sorts_by_total_traffic_descending(self):
+        """Highest total-traffic client comes first."""
+        clients = [
+            ClientData(mac="aa:bb:cc:00:00:01", rx_bytes=100, tx_bytes=50),
+            ClientData(mac="aa:bb:cc:00:00:02", rx_bytes=5000, tx_bytes=3000),
+            ClientData(mac="aa:bb:cc:00:00:03", rx_bytes=200, tx_bytes=100),
+        ]
+        sorted_clients = _sort_clients_by_traffic(clients)
+        assert sorted_clients[0].mac == "aa:bb:cc:00:00:02"
+        assert sorted_clients[1].mac == "aa:bb:cc:00:00:03"
+        assert sorted_clients[2].mac == "aa:bb:cc:00:00:01"
+
+    def test_empty_list_returns_empty(self):
+        assert _sort_clients_by_traffic([]) == []
+
+    def test_single_client_unchanged(self):
+        clients = [ClientData(mac="aa:bb:cc:00:00:01", rx_bytes=100, tx_bytes=50)]
+        result = _sort_clients_by_traffic(clients)
+        assert len(result) == 1
+        assert result[0].mac == "aa:bb:cc:00:00:01"
+
+    def test_equal_traffic_preserves_order(self):
+        """Clients with identical traffic maintain stable sort order."""
+        clients = [
+            ClientData(mac="aa:bb:cc:00:00:01", rx_bytes=100, tx_bytes=100),
+            ClientData(mac="aa:bb:cc:00:00:02", rx_bytes=100, tx_bytes=100),
+        ]
+        result = _sort_clients_by_traffic(clients)
+        assert result[0].mac == "aa:bb:cc:00:00:01"
+        assert result[1].mac == "aa:bb:cc:00:00:02"
+
+
+# ---------------------------------------------------------------------------
+# T041: Client cardinality capping
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestClientCapping:
+    """build_snapshot_from_api caps clients at max_clients."""
+
+    def test_max_clients_caps_to_top_n_by_traffic(self):
+        """With max_clients=2, only the top 2 by traffic are kept."""
+        clients_data = [
+            {"mac": "aa:bb:cc:00:00:01", "rx_bytes": 100, "tx_bytes": 50},
+            {"mac": "aa:bb:cc:00:00:02", "rx_bytes": 5000, "tx_bytes": 3000},
+            {"mac": "aa:bb:cc:00:00:03", "rx_bytes": 200, "tx_bytes": 100},
+            {"mac": "aa:bb:cc:00:00:04", "rx_bytes": 9000, "tx_bytes": 1000},
+        ]
+        snap = build_snapshot_from_api(
+            "main", "default", [], clients_data, [], max_clients=2,
+        )
+        site = snap.sites["default"]
+        assert len(site.clients) == 2
+        # Highest traffic clients kept (sorted descending)
+        macs = [c.mac for c in site.clients]
+        assert "aa:bb:cc:00:00:04" in macs  # 10000 total
+        assert "aa:bb:cc:00:00:02" in macs  # 8000 total
+
+    def test_max_clients_zero_keeps_all(self):
+        """max_clients=0 means no cap — all clients are kept."""
+        clients_data = [
+            {"mac": f"aa:bb:cc:00:00:{i:02x}", "rx_bytes": i * 100, "tx_bytes": 0}
+            for i in range(10)
+        ]
+        snap = build_snapshot_from_api(
+            "main", "default", [], clients_data, [], max_clients=0,
+        )
+        site = snap.sites["default"]
+        assert len(site.clients) == 10
+
+    def test_max_clients_larger_than_actual_keeps_all(self):
+        """When max_clients exceeds actual count, all clients kept."""
+        clients_data = [
+            {"mac": "aa:bb:cc:00:00:01", "rx_bytes": 100, "tx_bytes": 50},
+        ]
+        snap = build_snapshot_from_api(
+            "main", "default", [], clients_data, [], max_clients=100,
+        )
+        site = snap.sites["default"]
+        assert len(site.clients) == 1
 
 
 # ---------------------------------------------------------------------------

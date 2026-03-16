@@ -21,6 +21,7 @@ except ImportError:
 _SITE_METRICS = None
 _DEVICE_METRICS = None
 _GATEWAY_METRICS = None
+_CLIENT_METRICS = None
 try:
     from pcp_pmda_unifi.pmda import SITE_METRICS as _SM
     _SITE_METRICS = _SM
@@ -34,6 +35,11 @@ except ImportError:
 try:
     from pcp_pmda_unifi.pmda import GATEWAY_METRICS as _GM
     _GATEWAY_METRICS = _GM
+except ImportError:
+    pass
+try:
+    from pcp_pmda_unifi.pmda import CLIENT_METRICS as _CM
+    _CLIENT_METRICS = _CM
 except ImportError:
     pass
 
@@ -340,3 +346,65 @@ class TestLabels:
     def test_domain_label_has_agent_unifi(self):
         """Domain-level label should include agent=unifi."""
         pass
+
+
+# ---------------------------------------------------------------------------
+# T039: Client metric registration (cluster 4)
+# ---------------------------------------------------------------------------
+
+
+class TestClientMetricRegistration:
+    """Cluster 4: all 15 client-level metrics from data-model.md."""
+
+    def test_client_metrics_list_exists(self):
+        """CLIENT_METRICS must be importable from pmda module."""
+        assert _CLIENT_METRICS is not None, "CLIENT_METRICS not exported from pmda"
+
+    def test_client_metrics_count(self):
+        """Exactly 15 client metrics per the data model."""
+        assert _CLIENT_METRICS is not None
+        assert len(_CLIENT_METRICS) == 15
+
+    def test_client_metrics_have_required_fields(self):
+        """Each metric tuple has (name, item, type, sem, attr_name)."""
+        assert _CLIENT_METRICS is not None
+        for metric in _CLIENT_METRICS:
+            assert len(metric) == 5, f"Metric {metric[0]} has wrong tuple length"
+
+    def test_client_metric_names_are_namespaced(self):
+        """All client metrics live under unifi.client.*"""
+        assert _CLIENT_METRICS is not None
+        for metric in _CLIENT_METRICS:
+            name = metric[0]
+            assert name.startswith("unifi.client."), (
+                f"Metric {name} not under unifi.client"
+            )
+
+    def test_client_metric_names_match_data_model(self):
+        """All 15 metric names from the data model are present."""
+        assert _CLIENT_METRICS is not None
+        expected_names = {
+            "unifi.client.hostname",
+            "unifi.client.ip",
+            "unifi.client.mac",
+            "unifi.client.oui",
+            "unifi.client.is_wired",
+            "unifi.client.sw_mac",
+            "unifi.client.sw_port",
+            "unifi.client.rx_bytes",
+            "unifi.client.tx_bytes",
+            "unifi.client.rx_packets",
+            "unifi.client.tx_packets",
+            "unifi.client.uptime",
+            "unifi.client.signal",
+            "unifi.client.network",
+            "unifi.client.last_seen",
+        }
+        actual_names = {m[0] for m in _CLIENT_METRICS}
+        assert actual_names == expected_names
+
+    def test_client_item_ids_are_unique(self):
+        """Item IDs within the cluster must not collide."""
+        assert _CLIENT_METRICS is not None
+        item_ids = [m[1] for m in _CLIENT_METRICS]
+        assert len(item_ids) == len(set(item_ids)), "Duplicate item IDs in CLIENT_METRICS"

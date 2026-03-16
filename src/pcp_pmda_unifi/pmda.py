@@ -22,6 +22,7 @@ from pcp_pmda_unifi.collector import UnifiClient
 from pcp_pmda_unifi.config import PmdaConfig, parse_config
 from pcp_pmda_unifi.instances import (
     GracePeriodTracker,
+    client_instance_name,
     controller_instance_name,
     device_instance_name,
     gateway_instance_name,
@@ -30,6 +31,7 @@ from pcp_pmda_unifi.instances import (
 )
 from pcp_pmda_unifi.poller import ControllerPoller
 from pcp_pmda_unifi.snapshot import (
+    ClientData,
     DeviceMeta,
     GatewayData,
     HealthData,
@@ -60,6 +62,7 @@ log = logging.getLogger(__name__)
 INDOM_SITE = 0
 INDOM_DEVICE = 1
 INDOM_SWITCH_PORT = 2
+INDOM_CLIENT = 3
 INDOM_GATEWAY = 5
 INDOM_CONTROLLER = 6
 
@@ -70,6 +73,7 @@ INDOM_CONTROLLER = 6
 CLUSTER_SITE = 0
 CLUSTER_DEVICE = 1
 CLUSTER_SWITCH_PORT = 2
+CLUSTER_CLIENT = 4
 CLUSTER_GATEWAY = 6
 CLUSTER_CONTROLLER = 9
 
@@ -168,6 +172,25 @@ if HAS_PCP:
         ("unifi.gateway.temperature",     17, c_api.PM_TYPE_FLOAT,  c_api.PM_SEM_INSTANT,  "temperature"),
     ]
 
+    # -- Cluster 4: client metrics (indom: client) ----------------------------
+    CLIENT_METRICS: List[Tuple[str, int, int, int, str]] = [
+        ("unifi.client.hostname",       0,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "hostname"),
+        ("unifi.client.ip",             1,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "ip"),
+        ("unifi.client.mac",            2,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "mac"),
+        ("unifi.client.oui",            3,  c_api.PM_TYPE_STRING, c_api.PM_SEM_DISCRETE, "oui"),
+        ("unifi.client.is_wired",       4,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "is_wired"),
+        ("unifi.client.sw_mac",         5,  c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "sw_mac"),
+        ("unifi.client.sw_port",        6,  c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "sw_port"),
+        ("unifi.client.rx_bytes",       7,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_bytes"),
+        ("unifi.client.tx_bytes",       8,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_bytes"),
+        ("unifi.client.rx_packets",     9,  c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "rx_packets"),
+        ("unifi.client.tx_packets",     10, c_api.PM_TYPE_U64,    c_api.PM_SEM_COUNTER,  "tx_packets"),
+        ("unifi.client.uptime",         11, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "uptime"),
+        ("unifi.client.signal",         12, c_api.PM_TYPE_32,     c_api.PM_SEM_INSTANT,  "signal"),
+        ("unifi.client.network",        13, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT,  "network"),
+        ("unifi.client.last_seen",      14, c_api.PM_TYPE_U64,    c_api.PM_SEM_INSTANT,  "last_seen"),
+    ]
+
     # -- Cluster 9: controller metrics (indom: controller) --------------------
     CONTROLLER_METRICS: List[Tuple[str, int, int, int, str]] = [
         ("unifi.controller.up",                 0, c_api.PM_TYPE_U32,    c_api.PM_SEM_INSTANT,  "up"),
@@ -183,6 +206,7 @@ else:
     SITE_METRICS = []
     DEVICE_METRICS = []
     SWITCH_PORT_METRICS = []
+    CLIENT_METRICS = []
     GATEWAY_METRICS = []
     CONTROLLER_METRICS = []
 
@@ -228,6 +252,7 @@ if HAS_PCP:
             self._site_instances: List = []
             self._device_instances: List = []
             self._switch_port_instances: List = []
+            self._client_instances: List = []
             self._gateway_instances: List = []
             self._controller_instances: List = []
 
@@ -235,6 +260,7 @@ if HAS_PCP:
             self._site_data_by_inst: Dict[int, Tuple[SiteData, Optional[GatewayData]]] = {}
             self._device_meta_by_inst: Dict[int, DeviceMeta] = {}
             self._port_data_by_inst: Dict[int, PortData] = {}
+            self._client_data_by_inst: Dict[int, ClientData] = {}
             self._gateway_data_by_inst: Dict[int, Tuple[GatewayData, int]] = {}
             self._controller_health_by_inst: Dict[int, Dict] = {}
 
@@ -242,12 +268,14 @@ if HAS_PCP:
             self._site_tracker = GracePeriodTracker()
             self._device_tracker = GracePeriodTracker()
             self._switch_port_tracker = GracePeriodTracker()
+            self._client_tracker = GracePeriodTracker()
             self._gateway_tracker = GracePeriodTracker()
 
             self._register_indoms()
             self._register_site_metrics()
             self._register_device_metrics()
             self._register_switch_port_metrics()
+            self._register_client_metrics()
             self._register_gateway_metrics()
             self._register_controller_metrics()
 
@@ -263,11 +291,13 @@ if HAS_PCP:
             self._site_indom = self.indom(INDOM_SITE)
             self._device_indom = self.indom(INDOM_DEVICE)
             self._switch_port_indom = self.indom(INDOM_SWITCH_PORT)
+            self._client_indom = self.indom(INDOM_CLIENT)
             self._gateway_indom = self.indom(INDOM_GATEWAY)
             self._controller_indom = self.indom(INDOM_CONTROLLER)
             self.add_indom(pmdaIndom(self._site_indom, []))
             self.add_indom(pmdaIndom(self._device_indom, []))
             self.add_indom(pmdaIndom(self._switch_port_indom, []))
+            self.add_indom(pmdaIndom(self._client_indom, []))
             self.add_indom(pmdaIndom(self._gateway_indom, []))
             self.add_indom(pmdaIndom(self._controller_indom, []))
 
@@ -305,6 +335,13 @@ if HAS_PCP:
             self._register_metrics_for_cluster(
                 SWITCH_PORT_METRICS, CLUSTER_SWITCH_PORT, self._switch_port_indom,
                 "UniFi switch port metric",
+            )
+
+        def _register_client_metrics(self) -> None:
+            """Register all 15 client metrics in cluster 4."""
+            self._register_metrics_for_cluster(
+                CLIENT_METRICS, CLUSTER_CLIENT, self._client_indom,
+                "UniFi client metric",
             )
 
         def _register_gateway_metrics(self) -> None:
@@ -386,12 +423,14 @@ if HAS_PCP:
             self._rebuild_site_instances()
             self._rebuild_device_instances()
             self._rebuild_switch_port_instances()
+            self._rebuild_client_instances()
             self._rebuild_gateway_instances()
             self._rebuild_controller_instances()
 
             self.replace_indom(self._site_indom, self._site_instances)
             self.replace_indom(self._device_indom, self._device_instances)
             self.replace_indom(self._switch_port_indom, self._switch_port_instances)
+            self.replace_indom(self._client_indom, self._client_instances)
             self.replace_indom(self._gateway_indom, self._gateway_instances)
             self.replace_indom(self._controller_indom, self._controller_instances)
 
@@ -482,6 +521,32 @@ if HAS_PCP:
             self._switch_port_instances = instances
             self._port_data_by_inst = port_data_by_inst
 
+        def _rebuild_client_instances(self) -> None:
+            """Walk all snapshots and build client instance lists."""
+            instances = []
+            client_data_by_inst: Dict[int, ClientData] = {}
+            inst_id = 0
+
+            for poller in self._pollers:
+                snapshot = poller.snapshot
+                if snapshot is None:
+                    continue
+
+                for site_name, site_data in snapshot.sites.items():
+                    for client in site_data.clients:
+                        inst_name = client_instance_name(
+                            snapshot.controller_name,
+                            site_name,
+                            client.hostname,
+                            client.mac,
+                        )
+                        instances.append(pmdaInstid(inst_id, inst_name))
+                        client_data_by_inst[inst_id] = client
+                        inst_id += 1
+
+            self._client_instances = instances
+            self._client_data_by_inst = client_data_by_inst
+
         def _rebuild_gateway_instances(self) -> None:
             """Walk all snapshots and build gateway instance lists."""
             instances = []
@@ -549,6 +614,8 @@ if HAS_PCP:
                 return self._fetch_device(item, inst)
             if cluster == CLUSTER_SWITCH_PORT:
                 return self._fetch_switch_port(item, inst)
+            if cluster == CLUSTER_CLIENT:
+                return self._fetch_client(item, inst)
             if cluster == CLUSTER_GATEWAY:
                 return self._fetch_gateway(item, inst)
             if cluster == CLUSTER_CONTROLLER:
@@ -677,6 +744,22 @@ if HAS_PCP:
 
             attr_name = SWITCH_PORT_METRICS[item][4]
             return self._extract_dataclass_value(port_data, attr_name)
+
+        # -- Cluster 4: client fetch -----------------------------------------
+
+        def _fetch_client(self, item: int, inst: int) -> list:
+            """Fetch a single client metric value."""
+            client = self._client_data_by_inst.get(inst)
+            if client is None:
+                if not self._client_data_by_inst:
+                    return [c_api.PM_ERR_AGAIN, 0]
+                return [c_api.PM_ERR_INST, 0]
+
+            if item < 0 or item >= len(CLIENT_METRICS):
+                return [c_api.PM_ERR_PMID, 0]
+
+            attr_name = CLIENT_METRICS[item][4]
+            return self._extract_dataclass_value(client, attr_name)
 
         # -- Cluster 6: gateway fetch ----------------------------------------
 
