@@ -30,49 +30,51 @@ through the standard PCP toolchain.
 pip3 install --root=%{buildroot} --prefix=/usr --no-deps --no-compile \
     %{SOURCE0}
 
+# Discover where pip installed the package
+SITELIB=$(find %{buildroot} -type d -name pcp_pmda_unifi -path "*/site-packages/*" | head -1)
+SITELIB_REL=${SITELIB#%{buildroot}}
+SITELIB_DIR=$(dirname "$SITELIB_REL")
+
 # Install man page
 install -d %{buildroot}%{_mandir}/man1
 install -m 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/pmdaunifi.1
 
 # Create PMDA directory structure
-install -d %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi
+install -d %{buildroot}/var/lib/pcp/pmdas/unifi
 
 # Deploy PMDA assets from the installed package
-cp -a %{buildroot}%{python3_sitelib}/pcp_pmda_unifi/deploy/Install \
-      %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi/
-cp -a %{buildroot}%{python3_sitelib}/pcp_pmda_unifi/deploy/Remove \
-      %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi/
-cp -a %{buildroot}%{python3_sitelib}/pcp_pmda_unifi/deploy/unifi.conf.sample \
-      %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi/
+install -m 0755 "$SITELIB/deploy/Install" %{buildroot}/var/lib/pcp/pmdas/unifi/
+install -m 0755 "$SITELIB/deploy/Remove"  %{buildroot}/var/lib/pcp/pmdas/unifi/
+install -m 0644 "$SITELIB/deploy/unifi.conf.sample" %{buildroot}/var/lib/pcp/pmdas/unifi/
 
-# Make Install and Remove executable
-chmod 0755 %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi/Install
-chmod 0755 %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi/Remove
+# Save sitelib path for %files
+echo "$SITELIB_DIR" > %{buildroot}/.sitelib_dir
 
 %post
 # Register the PMDA with PMCD
-cd %{_localstatedir}/lib/pcp/pmdas/unifi && ./Install -u </dev/null >/dev/null 2>&1
+cd /var/lib/pcp/pmdas/unifi && ./Install -u </dev/null >/dev/null 2>&1
 exit 0
 
 %preun
 if [ "$1" = "0" ]; then
     # Package removal (not upgrade) — deregister from PMCD
-    cd %{_localstatedir}/lib/pcp/pmdas/unifi && ./Remove </dev/null >/dev/null 2>&1
+    cd /var/lib/pcp/pmdas/unifi && ./Remove </dev/null >/dev/null 2>&1
 fi
 exit 0
 
 %files
 %license LICENSE
 %doc README.md
-%{python3_sitelib}/pcp_pmda_unifi/
-%{python3_sitelib}/pcp_pmda_unifi-*.dist-info/
-%dir %{_localstatedir}/lib/pcp/pmdas/unifi
-%{_localstatedir}/lib/pcp/pmdas/unifi/Install
-%{_localstatedir}/lib/pcp/pmdas/unifi/Remove
-%{_localstatedir}/lib/pcp/pmdas/unifi/unifi.conf.sample
+/usr/lib/python*/site-packages/pcp_pmda_unifi/
+/usr/lib/python*/site-packages/pcp_pmda_unifi-*.dist-info/
+%dir /var/lib/pcp/pmdas/unifi
+/var/lib/pcp/pmdas/unifi/Install
+/var/lib/pcp/pmdas/unifi/Remove
+/var/lib/pcp/pmdas/unifi/unifi.conf.sample
 %{_bindir}/unifi2dot
 %{_bindir}/pcp-pmda-unifi-setup
 %{_mandir}/man1/pmdaunifi.1*
+%exclude /.sitelib_dir
 
 %changelog
 * Sun Mar 16 2026 pmdaunifi contributors - @@VERSION@@-1
