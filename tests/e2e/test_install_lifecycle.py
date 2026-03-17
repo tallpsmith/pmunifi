@@ -26,6 +26,24 @@ MOCK_URL = "http://127.0.0.1:18443"
 MOCK_API_KEY = "test-key"
 
 
+def _pcp_site_packages():
+    """Find the system Python's site-packages where python3-pcp is installed.
+
+    On Ubuntu, python3-pcp installs to /usr/lib/python3/dist-packages.
+    We need this on PYTHONPATH so that pmpython (running under our
+    actions/setup-python interpreter) can find pcp.pmda.
+    """
+    candidates = [
+        "/usr/lib/python3/dist-packages",
+        "/usr/lib/python3.12/dist-packages",
+        "/usr/lib/python3.11/dist-packages",
+    ]
+    for path in candidates:
+        if Path(path).joinpath("pcp").is_dir():
+            return path
+    return None
+
+
 def _run(cmd, timeout=30, **kwargs):
     """Run a command and return the result, capturing output."""
     return subprocess.run(
@@ -68,9 +86,14 @@ class TestInstallLifecycle:
             "UNIFI_IS_UDM": "false",
             "UNIFI_VERIFY_SSL": "false",
             "UNIFI_SITES": "default",
-            # Tell pmpython to use the same Python that has our package
+            # Tell PCP to use the same Python that has our package
             "PCP_PYTHON_PROG": sys.executable,
         })
+        # Ensure pcp.pmda (from system python3-pcp) is importable
+        pcp_sp = _pcp_site_packages()
+        if pcp_sp:
+            existing = env.get("PYTHONPATH", "")
+            env["PYTHONPATH"] = f"{pcp_sp}:{existing}" if existing else pcp_sp
         result = _run(
             ["sudo", "-E", "./Install", "-e"],
             cwd=str(PMDAS_DIR),
