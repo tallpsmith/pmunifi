@@ -1050,7 +1050,7 @@ if HAS_PCP:
 
     def run() -> None:
         """Entry point for the PMDA — called by PMCD or Install script."""
-        UnifiPMDA("unifi", 155).run()
+        UnifiPMDA("unifi", 256).run()
 
 else:
     # PCP not installed — provide a stub so imports don't crash tests
