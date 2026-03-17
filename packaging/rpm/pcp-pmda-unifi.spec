@@ -24,7 +24,7 @@ gateway WAN/LAN metrics, client tracking, AP radio, and DPI metrics
 through the standard PCP toolchain.
 
 %prep
-%autosetup -n %{name}-%{version}
+%autosetup -n pcp_pmda_unifi-%{version}
 
 %build
 %py3_build
