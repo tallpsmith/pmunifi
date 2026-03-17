@@ -8,6 +8,20 @@
 #   ./Install -u     Upgrade: preserves existing config, re-registers only
 #
 
+# ---------------------------------------------------------------------------
+# Parse our flags BEFORE sourcing pmdaproc.sh — it consumes $@ for its
+# own -e flag (which means "use existing config" in PCP).
+# ---------------------------------------------------------------------------
+env_mode=false
+upgrade_mode=false
+
+for arg in "$@"; do
+    case "$arg" in
+        -e) env_mode=true ;;
+        -u) upgrade_mode=true ;;
+    esac
+done
+
 . $PCP_DIR/etc/pcp.env
 . $PCP_SHARE_DIR/lib/pmdaproc.sh
 
@@ -17,20 +31,6 @@ daemon_opt=false
 
 # The Python helper does the heavy lifting (connectivity checks, config gen)
 python=${PCP_PYTHON_PROG:-pmpython}
-
-# ---------------------------------------------------------------------------
-# Parse flags
-# ---------------------------------------------------------------------------
-env_mode=false
-upgrade_mode=false
-
-while getopts "eu" opt; do
-    case "$opt" in
-        e) env_mode=true ;;
-        u) upgrade_mode=true ;;
-        *) ;;
-    esac
-done
 
 # ---------------------------------------------------------------------------
 # Upgrade mode: skip all prompts, just re-register with PMCD
