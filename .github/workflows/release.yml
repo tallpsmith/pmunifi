@@ -43,7 +43,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - run: sudo apt-get update && sudo apt-get install -y rpm rpmlint pandoc pcp python3-dev python3-setuptools
+      - run: sudo apt-get update && sudo apt-get install -y rpm pandoc
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -59,16 +59,13 @@ jobs:
       - name: Inject version into RPM spec
         run: sed -i "s/@@VERSION@@/${{ steps.version.outputs.version }}/g" packaging/rpm/pcp-pmda-unifi.spec
 
-      - name: Build sdist for RPM source
-        run: python -m build --sdist
+      - name: Build wheel
+        run: python -m build --wheel
 
       - name: Prepare rpmbuild tree
         run: |
           mkdir -p ~/rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
-          VERSION="${{ steps.version.outputs.version }}"
-          SDIST=$(ls dist/pcp_pmda_unifi-*.tar.gz)
-          echo "Found sdist: $SDIST"
-          cp "$SDIST" ~/rpmbuild/SOURCES/pcp-pmda-unifi-${VERSION}.tar.gz
+          cp dist/pcp_pmda_unifi-*.whl ~/rpmbuild/SOURCES/
           cp packaging/rpm/pcp-pmda-unifi.spec ~/rpmbuild/SPECS/
 
       - name: Build man page
@@ -76,7 +73,6 @@ jobs:
 
       - name: Build RPM (noarch)
         run: rpmbuild -bb --nodeps ~/rpmbuild/SPECS/pcp-pmda-unifi.spec --define "_topdir $HOME/rpmbuild"
-        continue-on-error: true
 
       - name: Collect RPM artifacts
         id: rpm-collect
@@ -101,8 +97,8 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y build-essential devscripts debhelper dh-python \
-            pybuild-plugin-pyproject python3-all python3-setuptools pcp pandoc
-      - run: pip install build hatch-vcs
+            pybuild-plugin-pyproject python3-all python3-setuptools \
+            python3-hatchling python3-hatch-vcs pcp pandoc
 
       - name: Extract version from tag
         id: version
@@ -134,7 +130,6 @@ jobs:
 
       - name: Build .deb
         run: dpkg-buildpackage -us -uc -b
-        continue-on-error: true
 
       - name: Collect .deb artifacts
         id: deb-collect

@@ -4,13 +4,10 @@ Release:        1%{?dist}
 Summary:        PCP PMDA for UniFi network monitoring
 License:        GPL-2.0-or-later
 URL:            https://github.com/tallpsmith/pmunifi
-Source0:        %{name}-%{version}.tar.gz
+Source0:        pcp_pmda_unifi-%{version}-py3-none-any.whl
+Source1:        pmdaunifi.1
 
 BuildArch:      noarch
-BuildRequires:  python3-devel
-BuildRequires:  python3-setuptools
-BuildRequires:  pcp-devel
-BuildRequires:  pandoc
 
 Requires:       pcp
 Requires:       python3-pcp
@@ -24,17 +21,18 @@ gateway WAN/LAN metrics, client tracking, AP radio, and DPI metrics
 through the standard PCP toolchain.
 
 %prep
-%autosetup -n pcp_pmda_unifi-%{version}
+# Nothing to unpack — we install from the pre-built wheel
 
 %build
-%py3_build
+# Wheel is pre-built
 
 %install
-%py3_install
+pip3 install --root=%{buildroot} --prefix=/usr --no-deps --no-compile \
+    %{SOURCE0}
 
-# Build and install man page
+# Install man page
 install -d %{buildroot}%{_mandir}/man1
-pandoc man/pmdaunifi.1.md -s -t man -o %{buildroot}%{_mandir}/man1/pmdaunifi.1
+install -m 0644 %{SOURCE1} %{buildroot}%{_mandir}/man1/pmdaunifi.1
 
 # Create PMDA directory structure
 install -d %{buildroot}%{_localstatedir}/lib/pcp/pmdas/unifi
@@ -67,7 +65,7 @@ exit 0
 %license LICENSE
 %doc README.md
 %{python3_sitelib}/pcp_pmda_unifi/
-%{python3_sitelib}/pcp_pmda_unifi-*.egg-info/
+%{python3_sitelib}/pcp_pmda_unifi-*.dist-info/
 %dir %{_localstatedir}/lib/pcp/pmdas/unifi
 %{_localstatedir}/lib/pcp/pmdas/unifi/Install
 %{_localstatedir}/lib/pcp/pmdas/unifi/Remove

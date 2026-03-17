@@ -6,7 +6,8 @@ Build-Depends: debhelper-compat (= 13),
                dh-python,
                pybuild-plugin-pyproject,
                python3-all,
-               python3-setuptools,
+               python3-hatchling,
+               python3-hatch-vcs,
                pcp
 Standards-Version: 4.6.2
 Homepage: https://github.com/tallpsmith/pmunifi
