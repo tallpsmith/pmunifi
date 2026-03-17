@@ -167,6 +167,14 @@ def _print_install_instructions(target: Path) -> None:
     print("")
     print("For non-interactive install:")
     print("  sudo -E ./Install -e")
+    print("")
+    print("pmrep views available after install:")
+    print("  pmrep :unifi-health          # PMDA/controller status")
+    print("  pmrep :unifi-site            # Site overview")
+    print("  pmrep :unifi-device-summary  # All devices")
+    print("  pmrep :unifi-switch-ports -i '.*USW.*'  # Switch ports")
+    print("  pmrep :unifi-ap-detail       # AP radios")
+    print("  pmrep :unifi-gateway-health  # Gateway status")
 
 
 if __name__ == "__main__":
