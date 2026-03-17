@@ -103,7 +103,7 @@ def _install_pmrep_conf(pmrep_dir: Optional[Path]) -> None:
     """
     if pmrep_dir is None:
         return
-    source = _resource_files("pcp_pmda_unifi").joinpath("deploy", "pmrep-unifi.conf")
+    source = _resource_files("pcp_pmda_unifi").joinpath("deploy").joinpath("pmrep-unifi.conf")
     dest = pmrep_dir / "pmrep-unifi.conf"
     try:
         dest.write_bytes(source.read_bytes())
