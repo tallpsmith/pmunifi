@@ -24,11 +24,20 @@ MOCK_URL = "http://127.0.0.1:18443"
 MOCK_API_KEY = "test-key"
 
 
-def _run(cmd, **kwargs):
+def _run(cmd, timeout=30, **kwargs):
     """Run a command and return the result, capturing output."""
     return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=30, **kwargs
+        cmd, capture_output=True, text=True, timeout=timeout, **kwargs
     )
+
+
+def _setup_cmd():
+    """Resolve the full path to pcp-pmda-unifi-setup for use with sudo."""
+    path = shutil.which("pcp-pmda-unifi-setup")
+    assert path is not None, (
+        "pcp-pmda-unifi-setup not found on PATH — is the package installed?"
+    )
+    return path
 
 
 @pytest.mark.e2e
@@ -38,7 +47,7 @@ class TestInstallLifecycle:
 
     def test_deploy_files(self):
         """pcp-pmda-unifi-setup install deploys the launcher and scripts."""
-        result = _run(["sudo", "pcp-pmda-unifi-setup", "install"])
+        result = _run(["sudo", _setup_cmd(), "install"])
         assert result.returncode == 0, f"Deploy failed: {result.stderr}"
         assert (PMDAS_DIR / "pmdaunifi.python").exists()
         assert (PMDAS_DIR / "Install").exists()
