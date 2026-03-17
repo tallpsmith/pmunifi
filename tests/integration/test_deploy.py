@@ -6,6 +6,7 @@ Tests cover:
 - Non-interactive config building from environment variables
 """
 
+import configparser
 import os
 import stat
 from unittest.mock import MagicMock, patch
@@ -85,6 +86,39 @@ class TestDeployToPmdasDir:
         deploy_to_pmdas_dir(tmp_path)
         mode = (tmp_path / "pmdaunifi.python").stat().st_mode
         assert mode & stat.S_IXUSR, "Launcher should be owner-executable"
+
+
+class TestDeployPmrepConf:
+    """deploy_to_pmdas_dir also installs pmrep-unifi.conf to the pmrep config dir."""
+
+    def test_installs_pmrep_conf(self, tmp_path):
+        """pmrep conf should be copied to the pmrep config directory."""
+        pmdas_dir = tmp_path / "pmdas" / "unifi"
+        pmrep_dir = tmp_path / "pmrep"
+        pmrep_dir.mkdir(parents=True)
+
+        deploy_to_pmdas_dir(pmdas_dir, pmrep_conf_dir=pmrep_dir)
+
+        conf_file = pmrep_dir / "pmrep-unifi.conf"
+        assert conf_file.exists(), "pmrep-unifi.conf not installed"
+
+    def test_pmrep_conf_is_valid_ini(self, tmp_path):
+        """Installed pmrep conf should parse as valid INI."""
+        pmdas_dir = tmp_path / "pmdas" / "unifi"
+        pmrep_dir = tmp_path / "pmrep"
+        pmrep_dir.mkdir(parents=True)
+
+        deploy_to_pmdas_dir(pmdas_dir, pmrep_conf_dir=pmrep_dir)
+
+        parser = configparser.ConfigParser()
+        parser.read(str(pmrep_dir / "pmrep-unifi.conf"))
+        assert "unifi-health" in parser.sections()
+
+    def test_skips_pmrep_install_when_dir_is_none(self, tmp_path):
+        """If pmrep_conf_dir is None, skip pmrep conf installation."""
+        pmdas_dir = tmp_path / "pmdas" / "unifi"
+        deploy_to_pmdas_dir(pmdas_dir, pmrep_conf_dir=None)
+        assert pmdas_dir.exists()
 
 
 # ---------------------------------------------------------------------------
