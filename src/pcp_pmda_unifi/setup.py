@@ -108,7 +108,8 @@ def _install_pmrep_conf(pmrep_dir: Optional[Path]) -> None:
     try:
         dest.write_bytes(source.read_bytes())
     except PermissionError:
-        pass
+        print(f"Warning: could not install pmrep views to {pmrep_dir} (permission denied)")
+        print(f"  Run with sudo or manually copy pmrep-unifi.conf to {pmrep_dir}")
 
 
 # ---------------------------------------------------------------------------
