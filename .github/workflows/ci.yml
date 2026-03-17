@@ -45,15 +45,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp
+      - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp python3-pip python3-venv
       - run: |
           sudo systemctl start pmcd
           . /etc/pcp.env && "$PCP_BINADM_DIR/pmcd_wait" -t 10
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - uses: astral-sh/setup-uv@v4
-      - run: uv pip install --system -e ".[test]"
+      # E2E tests use the SYSTEM Python so pmpython/pcp.pmda bindings work
+      # under sudo without PYTHONPATH hacks.
+      - run: |
+          sudo pip install --break-system-packages -e ".[test]"
       - name: Start mock UniFi API
-        run: python tests/e2e/mock_server.py &
-      - run: pytest tests/e2e/ -m e2e -v
+        run: python3 tests/e2e/mock_server.py &
+      - run: python3 -m pytest tests/e2e/ -m e2e -v
