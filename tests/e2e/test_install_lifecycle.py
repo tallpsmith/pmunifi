@@ -7,8 +7,10 @@ metrics flow through PCP after install and disappear after remove.
 Must run LAST in the e2e suite because it modifies global PMCD state.
 """
 
+import os
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -55,14 +57,20 @@ class TestInstallLifecycle:
 
     def test_install_registers_pmda(self):
         """sudo -E ./Install -e registers the PMDA with PMCD."""
-        env = {
+        # Build env from current process so PCP vars, PYTHONPATH, and the
+        # correct Python bin dir are all inherited.  The Install script's
+        # pmpython needs to find pcp_pmda_unifi in the same Python that
+        # pip installed it to.
+        env = os.environ.copy()
+        env.update({
             "UNIFI_URL": MOCK_URL,
             "UNIFI_API_KEY": MOCK_API_KEY,
             "UNIFI_IS_UDM": "false",
             "UNIFI_VERIFY_SSL": "false",
             "UNIFI_SITES": "default",
-            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin",
-        }
+            # Tell pmpython to use the same Python that has our package
+            "PCP_PYTHON_PROG": sys.executable,
+        })
         result = _run(
             ["sudo", "-E", "./Install", "-e"],
             cwd=str(PMDAS_DIR),
