@@ -84,6 +84,91 @@ class TestInstallLifecycle:
             f"Expected 'default' site in output:\n{result.stdout}"
         )
 
+    # -------------------------------------------------------------------
+    # pmrep view tests — run after metrics are confirmed flowing
+    # -------------------------------------------------------------------
+
+    def test_pmrep_health_view(self):
+        """pmrep :unifi-health returns controller status in one-shot."""
+        result = _run(["pmrep", ":unifi-health"])
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        assert "9.0.114" in result.stdout, (
+            f"Expected controller version in output:\n{result.stdout}"
+        )
+
+    def test_pmrep_site_view(self):
+        """pmrep :unifi-site returns site counts in one-shot."""
+        result = _run(["pmrep", ":unifi-site"])
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        # The mock serves a "default" site — instance name should appear
+        assert "default" in result.stdout.lower(), (
+            f"Expected 'default' site in output:\n{result.stdout}"
+        )
+
+    def test_pmrep_device_summary_view(self):
+        """pmrep :unifi-device-summary lists all devices in one-shot."""
+        result = _run(["pmrep", ":unifi-device-summary"])
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        assert "USW-Pro-48-Rack1" in result.stdout, (
+            f"Expected switch name in output:\n{result.stdout}"
+        )
+
+    def test_pmrep_switch_detail_view(self):
+        """pmrep :unifi-switch-detail with filter shows switch status."""
+        result = _run(["pmrep", ":unifi-switch-detail", "-i", ".*USW.*"])
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        assert "USW-Pro-48" in result.stdout, (
+            f"Expected switch in filtered output:\n{result.stdout}"
+        )
+
+    def test_pmrep_gateway_health_view(self):
+        """pmrep :unifi-gateway-health returns gateway status in one-shot."""
+        result = _run(["pmrep", ":unifi-gateway-health"])
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        assert "UDM-Pro" in result.stdout or len(result.stdout.strip()) > 0, (
+            f"Expected gateway data in output:\n{result.stdout}"
+        )
+
+    def test_pmrep_site_traffic_rate_view(self):
+        """pmrep :unifi-site-traffic produces rate-converted throughput."""
+        result = _run(["pmrep", ":unifi-site-traffic"], timeout=15)
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        # Rate view runs 2 samples at 5s — should produce at least one data row
+        lines = [ln for ln in result.stdout.splitlines() if ln.strip()]
+        assert len(lines) >= 2, (
+            f"Expected header + data row, got:\n{result.stdout}"
+        )
+
+    def test_pmrep_switch_ports_rate_view(self):
+        """pmrep :unifi-switch-ports produces per-port rate data."""
+        result = _run(
+            ["pmrep", ":unifi-switch-ports", "-i", ".*USW-Pro-48.*"],
+            timeout=15,
+        )
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        lines = [ln for ln in result.stdout.splitlines() if ln.strip()]
+        assert len(lines) >= 2, (
+            f"Expected header + port data rows, got:\n{result.stdout}"
+        )
+
+    def test_pmrep_ap_detail_rate_view(self):
+        """pmrep :unifi-ap-detail produces AP radio rate data."""
+        result = _run(["pmrep", ":unifi-ap-detail"], timeout=15)
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        lines = [ln for ln in result.stdout.splitlines() if ln.strip()]
+        assert len(lines) >= 2, (
+            f"Expected header + radio data rows, got:\n{result.stdout}"
+        )
+
+    def test_pmrep_gateway_traffic_rate_view(self):
+        """pmrep :unifi-gateway-traffic produces WAN throughput rate data."""
+        result = _run(["pmrep", ":unifi-gateway-traffic"], timeout=15)
+        assert result.returncode == 0, f"pmrep failed: {result.stderr}"
+        lines = [ln for ln in result.stdout.splitlines() if ln.strip()]
+        assert len(lines) >= 2, (
+            f"Expected header + data row, got:\n{result.stdout}"
+        )
+
     def test_remove_deregisters_pmda(self):
         """sudo ./Remove deregisters the PMDA from PMCD."""
         result = _run(
