@@ -63,8 +63,6 @@ fi
 exit 0
 
 %files
-%license LICENSE
-%doc README.md
 /usr/lib/python*/site-packages/pcp_pmda_unifi/
 /usr/lib/python*/site-packages/pcp_pmda_unifi-*.dist-info/
 %dir /var/lib/pcp/pmdas/unifi
