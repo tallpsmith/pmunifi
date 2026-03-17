@@ -12,6 +12,7 @@ import argparse
 import os
 import shutil
 from pathlib import Path
+from typing import Optional
 
 # Python 3.8 compat: importlib.resources.files() arrived in 3.9
 try:
@@ -34,13 +35,15 @@ DEPLOY_ARTIFACTS = ["Install", "Remove", "unifi.conf.sample"]
 
 EXECUTABLE_PERMISSIONS = 0o755
 
+_UNSET = object()
+
 
 # ---------------------------------------------------------------------------
 # Deploy logic
 # ---------------------------------------------------------------------------
 
 
-def deploy_to_pmdas_dir(target_dir: Path) -> None:
+def deploy_to_pmdas_dir(target_dir: Path, pmrep_conf_dir: object = _UNSET) -> None:
     """Copy deploy artifacts and generate the launcher script.
 
     This is the core of `pcp-pmda-unifi-setup install`.  Separated from
@@ -51,6 +54,7 @@ def deploy_to_pmdas_dir(target_dir: Path) -> None:
     _copy_deploy_artifacts(target_dir)
     _generate_launcher(target_dir)
     _set_executable_permissions(target_dir)
+    _install_pmrep_conf(_resolve_pmrep_dir(pmrep_conf_dir))
 
 
 def _copy_deploy_artifacts(target_dir: Path) -> None:
@@ -76,6 +80,35 @@ def _set_executable_permissions(target_dir: Path) -> None:
     for filename in executables:
         filepath = target_dir / filename
         filepath.chmod(EXECUTABLE_PERMISSIONS)
+
+
+def _resolve_pmrep_dir(pmrep_conf_dir: object) -> Optional[Path]:
+    """Determine the pmrep config directory.
+
+    When called from tests, an explicit Path or None is passed.
+    In production, auto-detects from PCP_SYSCONF_DIR.
+    """
+    if pmrep_conf_dir is not _UNSET:
+        return pmrep_conf_dir  # type: ignore[return-value]
+    sysconf = os.environ.get("PCP_SYSCONF_DIR", "/etc/pcp")
+    candidate = Path(sysconf) / "pmrep"
+    return candidate if candidate.is_dir() else None
+
+
+def _install_pmrep_conf(pmrep_dir: Optional[Path]) -> None:
+    """Copy pmrep-unifi.conf to the pmrep config directory.
+
+    Silently skips if the directory is not writable (e.g. auto-detected
+    system dir without root privileges).
+    """
+    if pmrep_dir is None:
+        return
+    source = _resource_files("pcp_pmda_unifi").joinpath("deploy", "pmrep-unifi.conf")
+    dest = pmrep_dir / "pmrep-unifi.conf"
+    try:
+        dest.write_bytes(source.read_bytes())
+    except PermissionError:
+        pass
 
 
 # ---------------------------------------------------------------------------
