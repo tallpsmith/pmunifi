@@ -158,6 +158,17 @@ class TestRateViewOverrides:
         """Rate views use a 5-second interval between samples."""
         assert conf.get(section, "interval") == "5s"
 
+
+
+# ---------------------------------------------------------------------------
+# TestOneshotViewDefaults
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestOneshotViewDefaults:
+    """One-shot views must set samples=1 for instant snapshot output."""
+
     @pytest.mark.parametrize("section", ONESHOT_SECTIONS)
     def test_oneshot_view_has_samples_1(self, conf, section):
         """Instant/gauge views only need a single sample."""
@@ -201,9 +212,8 @@ class TestViewsUseColxrow:
     @pytest.mark.parametrize("section", EXPECTED_SECTIONS)
     def test_view_has_colxrow(self, conf, section):
         """The view sets colxrow to an instance-identifying metric."""
-        assert conf.has_option(section, "colxrow"), (
-            f"[{section}] missing colxrow"
-        )
+        value = conf.get(section, "colxrow", fallback="")
+        assert value.strip(), f"[{section}] colxrow must be set to a non-empty value"
 
 
 # ---------------------------------------------------------------------------
