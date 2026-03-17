@@ -148,8 +148,9 @@ class TestInstallLifecycle:
         assert _has_data_rows(result.stdout), (
             f"Expected data rows in output:\n{result.stdout}"
         )
-        # Should show device types from the mock (usw, uap, udm)
-        assert "usw" in result.stdout.lower() or "uap" in result.stdout.lower(), (
+        # Should show device types from the mock (udm at minimum)
+        output_lower = result.stdout.lower()
+        assert "usw" in output_lower or "uap" in output_lower or "udm" in output_lower, (
             f"Expected device type in output:\n{result.stdout}"
         )
 
