@@ -77,9 +77,13 @@ class TestInstallLifecycle:
             env=env,
         )
         assert result.returncode == 0, (
-            f"Install failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
+            f"Install failed (rc={result.returncode}):\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
         )
-        assert (PMDAS_DIR / "unifi.conf").exists()
+        assert (PMDAS_DIR / "unifi.conf").exists(), (
+            f"unifi.conf not created. Install output:\n"
+            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+        )
 
     def test_controller_version_metric(self):
         """After install, unifi.controller.version returns the mock version."""
