@@ -52,7 +52,7 @@ jobs:
       # E2E tests use the SYSTEM Python so pmpython/pcp.pmda bindings work
       # under sudo without PYTHONPATH hacks.
       - run: |
-          sudo pip install --break-system-packages -e ".[test]"
+          sudo pip install --break-system-packages --ignore-installed -e ".[test]"
       - name: Start mock UniFi API
         run: python3 tests/e2e/mock_server.py &
       - run: python3 -m pytest tests/e2e/ -m e2e -v
