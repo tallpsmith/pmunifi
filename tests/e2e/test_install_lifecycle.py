@@ -7,13 +7,17 @@ metrics flow through PCP after install and disappear after remove.
 Must run LAST in the e2e suite because it modifies global PMCD state.
 """
 
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
-pcp = pytest.importorskip("pcp", reason="PCP Python bindings not installed")
+pytestmark = pytest.mark.skipif(
+    shutil.which("pminfo") is None,
+    reason="PCP tools not installed (pminfo not found on PATH)",
+)
 
 PMDAS_DIR = Path("/var/lib/pcp/pmdas/unifi")
 MOCK_URL = "http://127.0.0.1:18443"
