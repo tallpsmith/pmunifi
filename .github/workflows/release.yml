@@ -1,4 +1,4 @@
-name: Release
+name: Release to PyPI & package repos
 
 on:
   release:
@@ -43,7 +43,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - run: sudo apt-get update && sudo apt-get install -y rpm rpmlint pandoc
+      - run: sudo apt-get update && sudo apt-get install -y rpm rpmlint pandoc pcp python3-dev python3-setuptools
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -75,14 +75,20 @@ jobs:
         run: pandoc man/pmdaunifi.1.md -s -t man -o ~/rpmbuild/SOURCES/pmdaunifi.1
 
       - name: Build RPM (noarch)
-        run: rpmbuild -bb ~/rpmbuild/SPECS/pcp-pmda-unifi.spec --define "_topdir $HOME/rpmbuild"
+        run: rpmbuild -bb --nodeps ~/rpmbuild/SPECS/pcp-pmda-unifi.spec --define "_topdir $HOME/rpmbuild"
         continue-on-error: true
+
+      - name: Collect RPM artifacts
+        id: rpm-collect
+        run: |
+          mkdir -p rpms
+          cp ~/rpmbuild/RPMS/noarch/*.rpm rpms/ 2>/dev/null && echo "found=true" >> "$GITHUB_OUTPUT" || echo "found=false" >> "$GITHUB_OUTPUT"
 
       - name: Upload RPM artifacts
         uses: softprops/action-gh-release@v2
         with:
-          files: ~/rpmbuild/RPMS/noarch/*.rpm
-        if: hashFiles('~/rpmbuild/RPMS/noarch/*.rpm') != ''
+          files: rpms/*.rpm
+        if: steps.rpm-collect.outputs.found == 'true'
 
   deb:
     name: Build Debian package
@@ -130,8 +136,14 @@ jobs:
         run: dpkg-buildpackage -us -uc -b
         continue-on-error: true
 
+      - name: Collect .deb artifacts
+        id: deb-collect
+        run: |
+          mkdir -p debs
+          cp ../*.deb debs/ 2>/dev/null && echo "found=true" >> "$GITHUB_OUTPUT" || echo "found=false" >> "$GITHUB_OUTPUT"
+
       - name: Upload .deb artifacts
         uses: softprops/action-gh-release@v2
         with:
-          files: ../*.deb
-        if: hashFiles('../*.deb') != ''
+          files: debs/*.deb
+        if: steps.deb-collect.outputs.found == 'true'
