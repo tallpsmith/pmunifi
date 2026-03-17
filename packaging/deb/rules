@@ -8,12 +8,15 @@ export PYBUILD_NAME = pcp-pmda-unifi
 
 override_dh_auto_install:
 	dh_auto_install
-	# Create PMDA directory structure
-	install -d debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi
-	# Deploy PMDA assets
-	install -m 0755 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/Install \
-		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Install
-	install -m 0755 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/Remove \
-		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Remove
-	install -m 0644 debian/pcp-pmda-unifi/usr/lib/python3/dist-packages/pcp_pmda_unifi/deploy/unifi.conf.sample \
-		debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/unifi.conf.sample
+	# Debug: show where pybuild installed everything
+	find debian/pcp-pmda-unifi -name "Install" -o -name "Remove" -o -name "unifi.conf.sample" 2>/dev/null || true
+	# Find the deploy directory wherever pybuild put it
+	DEPLOY=$$(find debian/pcp-pmda-unifi -path "*/pcp_pmda_unifi/deploy" -type d | head -1) && \
+	if [ -n "$$DEPLOY" ]; then \
+		install -d debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi && \
+		install -m 0755 "$$DEPLOY/Install" debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Install && \
+		install -m 0755 "$$DEPLOY/Remove" debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/Remove && \
+		install -m 0644 "$$DEPLOY/unifi.conf.sample" debian/pcp-pmda-unifi/var/lib/pcp/pmdas/unifi/unifi.conf.sample; \
+	else \
+		echo "ERROR: deploy directory not found after pybuild install" && exit 1; \
+	fi

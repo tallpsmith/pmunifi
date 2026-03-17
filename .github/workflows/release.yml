@@ -63,16 +63,24 @@ jobs:
         run: python -m build --wheel
 
       - name: Prepare rpmbuild tree
+        id: rpmbuild-prep
         run: |
           mkdir -p ~/rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
-          cp dist/pcp_pmda_unifi-*.whl ~/rpmbuild/SOURCES/pcp_pmda_unifi-py3-none-any.whl
+          WHEEL=$(ls dist/pcp_pmda_unifi-*.whl)
+          WHEEL_BASENAME=$(basename "$WHEEL")
+          echo "Found wheel: $WHEEL_BASENAME"
+          echo "wheel=$WHEEL_BASENAME" >> "$GITHUB_OUTPUT"
+          cp "$WHEEL" ~/rpmbuild/SOURCES/
           cp packaging/rpm/pcp-pmda-unifi.spec ~/rpmbuild/SPECS/
 
       - name: Build man page
         run: pandoc man/pmdaunifi.1.md -s -t man -o ~/rpmbuild/SOURCES/pmdaunifi.1
 
       - name: Build RPM (noarch)
-        run: rpmbuild -bb --nodeps ~/rpmbuild/SPECS/pcp-pmda-unifi.spec --define "_topdir $HOME/rpmbuild"
+        run: >
+          rpmbuild -bb --nodeps ~/rpmbuild/SPECS/pcp-pmda-unifi.spec
+          --define "_topdir $HOME/rpmbuild"
+          --define "wheel_file ${{ steps.rpmbuild-prep.outputs.wheel }}"
 
       - name: Collect RPM artifacts
         id: rpm-collect
