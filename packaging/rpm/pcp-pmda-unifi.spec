@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        PCP PMDA for UniFi network monitoring
 License:        GPL-2.0-or-later
 URL:            https://github.com/tallpsmith/pmunifi
-Source0:        pcp_pmda_unifi-%{version}-py3-none-any.whl
+Source0:        pcp_pmda_unifi-py3-none-any.whl
 Source1:        pmdaunifi.1
 
 BuildArch:      noarch

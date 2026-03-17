@@ -65,7 +65,7 @@ jobs:
       - name: Prepare rpmbuild tree
         run: |
           mkdir -p ~/rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
-          cp dist/pcp_pmda_unifi-*.whl ~/rpmbuild/SOURCES/
+          cp dist/pcp_pmda_unifi-*.whl ~/rpmbuild/SOURCES/pcp_pmda_unifi-py3-none-any.whl
           cp packaging/rpm/pcp-pmda-unifi.spec ~/rpmbuild/SPECS/
 
       - name: Build man page
