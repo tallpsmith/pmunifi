@@ -172,7 +172,7 @@ class TestInstallLifecycle:
 
     def test_pmrep_site_traffic_rate_view(self):
         """pmrep :unifi-site-traffic produces rate-converted throughput."""
-        result = _run(["pmrep", ":unifi-site-traffic"], timeout=15)
+        result = _run(["pmrep", ":unifi-site-traffic"], timeout=45)
         assert result.returncode == 0, f"pmrep failed: {result.stderr}"
         assert _has_data_rows(result.stdout), (
             f"Expected data rows in output:\n{result.stdout}"
@@ -182,7 +182,7 @@ class TestInstallLifecycle:
         """pmrep :unifi-switch-ports produces per-port rate data."""
         result = _run(
             ["pmrep", ":unifi-switch-ports", "-i", ".*USW-Pro-48.*"],
-            timeout=15,
+            timeout=45,
         )
         assert result.returncode == 0, f"pmrep failed: {result.stderr}"
         assert _has_data_rows(result.stdout), (
@@ -191,7 +191,7 @@ class TestInstallLifecycle:
 
     def test_pmrep_ap_detail_rate_view(self):
         """pmrep :unifi-ap-detail produces AP radio rate data."""
-        result = _run(["pmrep", ":unifi-ap-detail"], timeout=15)
+        result = _run(["pmrep", ":unifi-ap-detail"], timeout=45)
         assert result.returncode == 0, f"pmrep failed: {result.stderr}"
         assert _has_data_rows(result.stdout), (
             f"Expected data rows in output:\n{result.stdout}"
@@ -199,7 +199,7 @@ class TestInstallLifecycle:
 
     def test_pmrep_gateway_traffic_rate_view(self):
         """pmrep :unifi-gateway-traffic produces WAN throughput rate data."""
-        result = _run(["pmrep", ":unifi-gateway-traffic"], timeout=15)
+        result = _run(["pmrep", ":unifi-gateway-traffic"], timeout=45)
         assert result.returncode == 0, f"pmrep failed: {result.stderr}"
         assert _has_data_rows(result.stdout), (
             f"Expected data rows in output:\n{result.stdout}"

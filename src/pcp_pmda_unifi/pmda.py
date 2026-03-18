@@ -20,8 +20,8 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from pcp_pmda_unifi.collector import UnifiClient
-from pcp_pmda_unifi.formatting import format_device_state, format_duration, format_time_ago
 from pcp_pmda_unifi.config import PmdaConfig, parse_config
+from pcp_pmda_unifi.formatting import format_device_state, format_duration, format_time_ago
 from pcp_pmda_unifi.instances import (
     GracePeriodTracker,
     ap_radio_instance_name,

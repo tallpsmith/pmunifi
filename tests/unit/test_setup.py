@@ -6,11 +6,7 @@ invoked via the system Python (pmpython).
 """
 
 import sys
-import sysconfig
-from pathlib import Path
 from unittest import mock
-
-import pytest
 
 from pcp_pmda_unifi.setup import deploy_to_pmdas_dir
 
@@ -79,9 +75,10 @@ class TestDetectVenvSitePackages:
         """When sys.prefix != sys.base_prefix, return the site-packages path."""
         from pcp_pmda_unifi.setup import _detect_venv_site_packages
 
+        site_pkg = "/tmp/myvenv/lib/python3.14/site-packages"
         with mock.patch.object(sys, "prefix", "/tmp/myvenv"), \
              mock.patch.object(sys, "base_prefix", "/usr"), \
-             mock.patch("sysconfig.get_path", return_value="/tmp/myvenv/lib/python3.14/site-packages"):
+             mock.patch("sysconfig.get_path", return_value=site_pkg):
             result = _detect_venv_site_packages()
 
         assert result == "/tmp/myvenv/lib/python3.14/site-packages"

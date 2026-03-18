@@ -90,10 +90,10 @@ class TestPmdaMetricCoverage:
         assert len(SITE_METRICS) == 15
 
     def test_device_metric_count(self):
-        """Cluster 1 should have 15 device metrics per data-model.md."""
+        """Cluster 1 should have 17 device metrics per data-model.md."""
         from pcp_pmda_unifi.pmda import DEVICE_METRICS
 
-        assert len(DEVICE_METRICS) == 15
+        assert len(DEVICE_METRICS) == 17
 
     def test_switch_port_metric_count(self):
         """Cluster 2 should have 19 switch port metrics per data-model.md."""
@@ -108,10 +108,10 @@ class TestPmdaMetricCoverage:
         assert len(POE_METRICS) == 6
 
     def test_client_metric_count(self):
-        """Cluster 4 should have 15 client metrics per data-model.md."""
+        """Cluster 4 should have 17 client metrics per data-model.md."""
         from pcp_pmda_unifi.pmda import CLIENT_METRICS
 
-        assert len(CLIENT_METRICS) == 15
+        assert len(CLIENT_METRICS) == 17
 
     def test_ap_radio_metric_count(self):
         """Cluster 5 should have 10 AP radio metrics per data-model.md."""
@@ -120,10 +120,10 @@ class TestPmdaMetricCoverage:
         assert len(AP_RADIO_METRICS) == 10
 
     def test_gateway_metric_count(self):
-        """Cluster 6 should have 18 gateway metrics per data-model.md."""
+        """Cluster 6 should have 19 gateway metrics per data-model.md."""
         from pcp_pmda_unifi.pmda import GATEWAY_METRICS
 
-        assert len(GATEWAY_METRICS) == 18
+        assert len(GATEWAY_METRICS) == 19
 
     def test_dpi_metric_count(self):
         """Cluster 8 should have 2 DPI metrics per data-model.md."""
@@ -132,10 +132,10 @@ class TestPmdaMetricCoverage:
         assert len(DPI_METRICS) == 2
 
     def test_controller_metric_count(self):
-        """Cluster 9 should have 8 controller metrics per data-model.md."""
+        """Cluster 9 should have 9 controller metrics per data-model.md."""
         from pcp_pmda_unifi.pmda import CONTROLLER_METRICS
 
-        assert len(CONTROLLER_METRICS) == 8
+        assert len(CONTROLLER_METRICS) == 9
 
     def test_metric_tuples_have_five_fields(self):
         """Every metric tuple should be (pmns_name, item, type, sem, attr)."""

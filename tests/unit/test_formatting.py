@@ -7,9 +7,6 @@ Three formatters:
 """
 
 import time
-from unittest import mock
-
-import pytest
 
 from pcp_pmda_unifi.formatting import (
     format_device_state,

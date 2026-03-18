@@ -5,11 +5,11 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
       - run: uvx ruff check src/ tests/
       - run: |
           uv pip install --system mypy types-requests
@@ -18,33 +18,33 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
       - run: uv pip install --system pytest pytest-cov requests flask
       - run: uv pip install --system -e . --no-deps
       - run: pytest tests/unit/ -m unit --cov=pcp_pmda_unifi --cov-report=xml -v
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: always()
 
   integration:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
       - run: uv pip install --system -e ".[test]"
       - run: pytest tests/integration/ -m integration -v
 
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - run: sudo apt-get update && sudo apt-get install -y pcp python3-pcp python3-pip python3-venv
       - run: |
           sudo systemctl start pmcd
