@@ -59,7 +59,7 @@ Examples:
 | `PM_TYPE_U32` | Integer instant values (num_sta, speed, state, port_idx, boolean flags) |
 | `PM_TYPE_S32` | Signed instant values (signal dBm) |
 | `PM_TYPE_FLOAT` | PoE measurements (power, voltage, current), temperature, CPU/mem %, poll_duration_ms |
-| `PM_TYPE_STRING` | Metadata (hostname, model, firmware, MAC, IP, OUI, poe_class, site status, WAN IP) |
+| `PM_TYPE_STRING` | Metadata (hostname, model, firmware, MAC, IP, OUI, poe_class, site status, WAN IP), display variants (`uptime_display`, `state_display`, `last_poll_display`, `last_seen_display`) |
 
 ## Units Contract
 

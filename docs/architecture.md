@@ -144,6 +144,7 @@ device reboots.
 | `snapshot.py` | Immutable dataclass definitions |
 | `config.py` | INI config parsing, validation, env var override |
 | `instances.py` | Instance naming, grace period tracking, cardinality caps |
+| `formatting.py` | Human-readable display formatters (uptime, state, time-ago) |
 | `topology.py` | Graph discovery from device uplink tables |
 | `cli.py` | `unifi2dot` CLI entry point |
 | `setup.py` | `pcp-pmda-unifi-setup` deployment entry point |

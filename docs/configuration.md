@@ -13,7 +13,7 @@ Parsed by Python `configparser` with case-sensitive keys.
 
 ```ini
 [global]
-poll_interval = 30
+poll_interval = 10
 max_clients = 1000
 grace_period = 300
 enable_dpi = false
@@ -22,7 +22,7 @@ log_level = warning
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `poll_interval` | int | `30` | Seconds between poll cycles (minimum 10) |
+| `poll_interval` | int | `10` | Seconds between poll cycles (minimum 10) |
 | `max_clients` | int | `1000` | Soft cap on tracked clients (0 = unlimited) |
 | `grace_period` | int | `300` | Seconds before pruning disappeared instances |
 | `enable_dpi` | bool | `false` | Enable DPI category metrics |
@@ -56,7 +56,7 @@ verify_ssl = true
 
 ```ini
 [global]
-poll_interval = 30
+poll_interval = 10
 max_clients = 1000
 grace_period = 300
 enable_dpi = false

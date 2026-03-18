@@ -22,7 +22,26 @@ just test
 | `just test` | Run unit + integration tests |
 | `just test-cov` | Unit tests with coverage report |
 | `just check` | Lint (ruff) + typecheck (mypy) |
-| `just clean` | Remove build artifacts |
+| `just build` | Build sdist and wheel |
+| `just trial-install` | Build, install into fresh venv, deploy and register PMDA |
+| `just clean-dist` | Remove old wheels/sdists |
+| `just clean` | Remove all build artifacts |
+
+### Trial Install
+
+`just trial-install` simulates a full PyPI install without publishing a release.
+It builds a wheel, installs it into a temporary venv, deploys the PMDA files,
+and runs `./Install -e` (non-interactive). Set your controller details in a
+`.env` file (loaded automatically via justfile `dotenv-load`):
+
+```env
+UNIFI_URL=https://10.120.1.1
+UNIFI_API_KEY=your-api-key-here
+UNIFI_IS_UDM=true
+UNIFI_VERIFY_SSL=false
+```
+
+The `.env` file is gitignored (it contains your API key).
 
 ## Project Structure
 
@@ -36,6 +55,7 @@ src/pcp_pmda_unifi/     Core PMDA package
   instances.py          Instance domain naming and pruning
   topology.py           Network topology graph discovery
   cli.py                unifi2dot CLI entry point
+  formatting.py         Human-readable display formatters (uptime, state)
   setup.py              pcp-pmda-unifi-setup deploy tool
   deploy/               Install/Remove scripts, sample config
 

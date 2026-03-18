@@ -25,15 +25,25 @@
 
 ## Install from PyPI
 
-```bash
-pip install pcp-pmda-unifi
-```
+=== "Linux"
 
-Deploy the PMDA files to `$PCP_PMDAS_DIR/unifi/`:
+    ```bash
+    pip install pcp-pmda-unifi
+    sudo pcp-pmda-unifi-setup install
+    ```
 
-```bash
-sudo pcp-pmda-unifi-setup install
-```
+=== "macOS (Homebrew)"
+
+    macOS restricts direct `pip install` into the system Python. Use a virtual
+    environment — the setup script automatically records the venv's
+    site-packages path so PCP's `pmpython` can find the module at runtime.
+
+    ```bash
+    brew install pcp
+    python3 -m venv /opt/pcp-pmda-unifi
+    /opt/pcp-pmda-unifi/bin/pip install pcp-pmda-unifi
+    sudo /opt/pcp-pmda-unifi/bin/pcp-pmda-unifi-setup install
+    ```
 
 ## Interactive Setup
 

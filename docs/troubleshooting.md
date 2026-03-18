@@ -15,7 +15,7 @@ pmval -s1 unifi.controller.up
 pmval -s1 unifi.controller.poll_errors
 
 # When was the last successful poll?
-pmval -s1 unifi.controller.last_poll
+pmval -s1 unifi.controller.last_poll_display
 ```
 
 Check the PMDA log for detailed error messages:
@@ -178,3 +178,22 @@ Common causes:
 - PCP Python bindings not available (`pcp-libs-python` or `python3-pcp`
   package not installed)
 - Syntax error in `unifi.conf`
+
+### macOS: `ModuleNotFoundError: No module named 'pcp_pmda_unifi'`
+
+**Symptom**: `sudo ./Install` fails with `ModuleNotFoundError` for
+`pcp_pmda_unifi`.
+
+**Cause**: The package was pip-installed into a virtual environment, but
+`pmpython` (PCP's Python wrapper) resolves to the system Python which
+can't see venv-installed packages.
+
+**Fix**: Re-run `pcp-pmda-unifi-setup install` using the venv's Python.
+The setup script detects the venv and records its site-packages path so
+`pmpython` can find the module:
+
+```bash
+sudo /path/to/your/venv/bin/pcp-pmda-unifi-setup install
+cd /var/lib/pcp/pmdas/unifi
+sudo ./Install
+```

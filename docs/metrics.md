@@ -41,7 +41,9 @@ unifi
 │   ├── temperature           [INSTANT]   indom:device
 │   ├── user_num_sta          [INSTANT]   indom:device
 │   ├── guest_num_sta         [INSTANT]   indom:device
-│   └── num_ports             [DISCRETE]  indom:device
+│   ├── num_ports             [DISCRETE]  indom:device
+│   ├── uptime_display        [INSTANT,STRING]  indom:device
+│   └── state_display         [INSTANT,STRING]  indom:device
 ├── switch
 │   └── port
 │       ├── rx_bytes          [COUNTER]   indom:switch_port
@@ -85,7 +87,9 @@ unifi
 │   ├── uptime                [INSTANT]   indom:client
 │   ├── signal                [INSTANT]   indom:client
 │   ├── network               [INSTANT]   indom:client
-│   └── last_seen             [INSTANT]   indom:client
+│   ├── last_seen             [INSTANT]   indom:client
+│   ├── uptime_display        [INSTANT,STRING]  indom:client
+│   └── last_seen_display     [INSTANT,STRING]  indom:client
 ├── ap
 │   ├── channel               [INSTANT]   indom:ap_radio
 │   ├── radio_type            [DISCRETE]  indom:ap_radio
@@ -115,7 +119,8 @@ unifi
 │   ├── uptime                [INSTANT]   indom:gateway
 │   ├── cpu                   [INSTANT]   indom:gateway
 │   ├── mem                   [INSTANT]   indom:gateway
-│   └── temperature           [INSTANT]   indom:gateway
+│   ├── temperature           [INSTANT]   indom:gateway
+│   └── uptime_display        [INSTANT,STRING]  indom:gateway
 ├── controller
 │   ├── up                    [INSTANT]   indom:controller
 │   ├── poll_duration_ms      [INSTANT]   indom:controller
@@ -124,7 +129,8 @@ unifi
 │   ├── version               [DISCRETE]  indom:controller
 │   ├── devices_discovered    [INSTANT]   indom:controller
 │   ├── clients_discovered    [INSTANT]   indom:controller
-│   └── sites_polled          [INSTANT]   indom:controller
+│   ├── sites_polled          [INSTANT]   indom:controller
+│   └── last_poll_display     [INSTANT,STRING]  indom:controller
 └── dpi
     ├── rx_bytes              [COUNTER]   indom:dpi_category
     └── tx_bytes              [COUNTER]   indom:dpi_category

@@ -38,7 +38,7 @@ API keys.
 ### Global Section
 
     [global]
-    poll_interval = 30       # seconds between polls (minimum 10)
+    poll_interval = 10       # seconds between polls (minimum 10)
     max_clients = 1000       # soft cap on tracked clients (0 = unlimited)
     grace_period = 300       # seconds before pruning disappeared instances
     enable_dpi = false       # enable DPI category metrics
@@ -97,6 +97,13 @@ Install the Python package and deploy PMDA files:
     pip install pcp-pmda-unifi
     sudo pcp-pmda-unifi-setup install
 
+On macOS (where `pip install` into system Python is restricted), use a
+virtual environment:
+
+    python3 -m venv /opt/pcp-pmda-unifi
+    /opt/pcp-pmda-unifi/bin/pip install pcp-pmda-unifi
+    sudo /opt/pcp-pmda-unifi/bin/pcp-pmda-unifi-setup install
+
 Run the interactive installer:
 
     cd /var/lib/pcp/pmdas/unifi
@@ -140,7 +147,9 @@ counters, and user/guest breakdowns. Instance domain: site
 
 Device inventory: name, MAC, IP, model, type, firmware version, state,
 uptime, adoption status, aggregate traffic, temperature, and connected
-station counts. Instance domain: device (`controller/site/device`).
+station counts. Human-readable display variants are provided for state
+(`state_display`) and uptime (`uptime_display`). Instance domain: device
+(`controller/site/device`).
 
 ### Cluster 2: Switch Port (`unifi.switch.port.*`)
 
@@ -159,7 +168,9 @@ cluster 2).
 
 Connected client tracking: hostname, IP, MAC, OUI, wired/wireless flag,
 connected switch port, traffic counters, uptime, signal strength,
-network name, and last-seen timestamp. Instance domain: client
+network name, and last-seen timestamp. Human-readable display variants
+are provided for uptime (`uptime_display`) and last-seen
+(`last_seen_display`). Instance domain: client
 (`controller/site/hostname`).
 
 ### Cluster 5: AP Radio (`unifi.ap.*`)
@@ -174,7 +185,8 @@ satisfaction score. Instance domain: ap_radio
 Gateway/router metrics: WAN IP, WAN traffic counters (bytes, packets,
 drops, errors), WAN link state and speed, WAN latency, LAN aggregate
 traffic, uptime, CPU utilisation, memory utilisation, and temperature.
-Instance domain: gateway (`controller/site/device`).
+A human-readable `uptime_display` variant is also provided. Instance
+domain: gateway (`controller/site/device`).
 
 ### Cluster 8: DPI (`unifi.dpi.*`)
 
@@ -186,8 +198,9 @@ rx_bytes and tx_bytes per category. Instance domain: dpi_category
 
 Controller operational health: reachability, poll duration, cumulative
 poll errors, last successful poll timestamp, software version, and
-discovery counts (devices, clients, sites). Instance domain: controller
-(`controller_name`).
+discovery counts (devices, clients, sites). A human-readable
+`last_poll_display` shows time since last poll (e.g., "3s ago").
+Instance domain: controller (`controller_name`).
 
 ## FILES
 

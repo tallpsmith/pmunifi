@@ -27,6 +27,8 @@ latency, track PoE power budgets, and spot flapping clients — all from
 
 ## Quick Start
 
+### Linux
+
 ```bash
 # Install PCP (if not already present)
 sudo dnf install pcp python3-pcp          # RHEL/Fedora
@@ -43,6 +45,29 @@ sudo ./Install
 # Verify
 pminfo -f unifi.switch.port.rx_bytes
 pmrep -t 5 unifi.switch.port.rx_bytes unifi.switch.port.tx_bytes
+```
+
+### macOS (Homebrew)
+
+macOS restricts direct `pip install` into the system Python. Use a virtual
+environment instead — the setup script automatically records the venv's
+site-packages path so PCP's `pmpython` can find the module at runtime.
+
+```bash
+# Install PCP
+brew install pcp
+
+# Install the PMDA into a venv
+python3 -m venv /opt/pcp-pmda-unifi
+/opt/pcp-pmda-unifi/bin/pip install pcp-pmda-unifi
+sudo /opt/pcp-pmda-unifi/bin/pcp-pmda-unifi-setup install
+
+# Run the interactive installer
+cd /var/lib/pcp/pmdas/unifi
+sudo ./Install
+
+# Verify
+pminfo -f unifi.switch.port.rx_bytes
 ```
 
 ## Documentation

@@ -34,13 +34,16 @@ packaging/              RPM and Debian packaging files
 
 ## Just Commands
 
-| Command          | What it does                                    |
-|------------------|-------------------------------------------------|
-| `just setup`     | Create venv, install deps (inc. dev/test extras)|
-| `just test`      | Run unit + integration tests                    |
-| `just test-cov`  | Run unit tests with coverage report             |
-| `just check`     | Lint (ruff) + typecheck (mypy)                  |
-| `just clean`     | Remove build artifacts and caches               |
+| Command              | What it does                                    |
+|----------------------|-------------------------------------------------|
+| `just setup`         | Create venv, install deps (inc. dev/test extras)|
+| `just test`          | Run unit + integration tests                    |
+| `just test-cov`      | Run unit tests with coverage report             |
+| `just check`         | Lint (ruff) + typecheck (mypy)                  |
+| `just build`         | Build sdist and wheel                           |
+| `just trial-install` | Build, install into fresh venv, deploy + register PMDA |
+| `just clean-dist`    | Remove old wheels/sdists                        |
+| `just clean`         | Remove build artifacts and caches               |
 
 ## Testing Requirements
 
@@ -115,6 +118,10 @@ else.
 
 ### Running on macOS
 
-PCP doesn't run on macOS, but you can still develop and run unit tests.
-The PMDA module detects missing PCP imports and stubs them out. Integration
-and e2e tests will be skipped automatically.
+PCP is available on macOS via Homebrew (`brew install pcp`). For development,
+unit tests run without PCP installed — the PMDA module detects missing PCP
+imports and stubs them out. Integration and e2e tests require PCP and will be
+skipped automatically if not present.
+
+To test the full install flow locally, use `just trial-install` with a `.env`
+file containing your controller details (see the Developer Guide).
