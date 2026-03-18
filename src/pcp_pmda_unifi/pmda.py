@@ -20,6 +20,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from pcp_pmda_unifi.collector import UnifiClient
+from pcp_pmda_unifi.formatting import format_device_state, format_duration, format_time_ago
 from pcp_pmda_unifi.config import PmdaConfig, parse_config
 from pcp_pmda_unifi.instances import (
     GracePeriodTracker,
@@ -134,6 +135,10 @@ if HAS_PCP:
         ("unifi.device.guest_num_sta", 13,
          c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "guest_num_sta"),
         ("unifi.device.num_ports", 14, c_api.PM_TYPE_U32, c_api.PM_SEM_DISCRETE, "num_ports"),
+        ("unifi.device.uptime_display", 15,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "uptime_display"),
+        ("unifi.device.state_display", 16,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "state_display"),
     ]
 
     # -- Cluster 2: switch port metrics (indom: switch_port) ------------------
@@ -217,6 +222,8 @@ if HAS_PCP:
         ("unifi.gateway.cpu", 15, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "cpu"),
         ("unifi.gateway.mem", 16, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "mem"),
         ("unifi.gateway.temperature", 17, c_api.PM_TYPE_FLOAT, c_api.PM_SEM_INSTANT, "temperature"),
+        ("unifi.gateway.uptime_display", 18,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "uptime_display"),
     ]
 
     # -- Cluster 8: DPI metrics (indom: dpi_category, opt-in FR-023) ----------
@@ -242,6 +249,10 @@ if HAS_PCP:
         ("unifi.client.signal", 12, c_api.PM_TYPE_32, c_api.PM_SEM_INSTANT, "signal"),
         ("unifi.client.network", 13, c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "network"),
         ("unifi.client.last_seen", 14, c_api.PM_TYPE_U64, c_api.PM_SEM_INSTANT, "last_seen"),
+        ("unifi.client.uptime_display", 15,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "uptime_display"),
+        ("unifi.client.last_seen_display", 16,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "last_seen_display"),
     ]
 
     # -- Cluster 9: controller metrics (indom: controller) --------------------
@@ -258,6 +269,8 @@ if HAS_PCP:
          c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "clients_discovered"),
         ("unifi.controller.sites_polled", 7,
          c_api.PM_TYPE_U32, c_api.PM_SEM_INSTANT, "sites_polled"),
+        ("unifi.controller.last_poll_display", 8,
+         c_api.PM_TYPE_STRING, c_api.PM_SEM_INSTANT, "last_poll_display"),
     ]
 else:
     SITE_METRICS = []
@@ -988,6 +1001,8 @@ if HAS_PCP:
             # uptime comes from the device meta, not GatewayData
             if attr_name == "uptime":
                 return [device_uptime, 1]
+            if attr_name == "uptime_display":
+                return [format_duration(device_uptime), 1]
 
             return self._extract_dataclass_value(gw_data, attr_name)
 
@@ -1021,6 +1036,11 @@ if HAS_PCP:
                 return [c_api.PM_ERR_PMID, 0]
 
             attr_name = CONTROLLER_METRICS[item][4]
+
+            if attr_name == "last_poll_display":
+                last_poll = health.get("last_poll", 0)
+                return [format_time_ago(last_poll), 1]
+
             value = health.get(attr_name)
             if value is None:
                 return [c_api.PM_ERR_PMID, 0]
@@ -1029,7 +1049,30 @@ if HAS_PCP:
         # -- Shared value extraction -----------------------------------------
 
         def _extract_dataclass_value(self, obj: Any, attr_name: str) -> list:
-            """Pull a named attribute from a dataclass and coerce for PCP."""
+            """Pull a named attribute from a dataclass and coerce for PCP.
+
+            Handles computed display attributes:
+              uptime_display   → format_duration(uptime)
+              last_seen_display → format_time_ago(last_seen)
+            """
+            if attr_name == "uptime_display":
+                uptime = getattr(obj, "uptime", None)
+                if uptime is None:
+                    return [c_api.PM_ERR_VALUE, 0]
+                return [format_duration(uptime), 1]
+
+            if attr_name == "last_seen_display":
+                last_seen = getattr(obj, "last_seen", None)
+                if last_seen is None:
+                    return [c_api.PM_ERR_VALUE, 0]
+                return [format_time_ago(last_seen), 1]
+
+            if attr_name == "state_display":
+                state = getattr(obj, "state", None)
+                if state is None:
+                    return [c_api.PM_ERR_VALUE, 0]
+                return [format_device_state(state), 1]
+
             value = getattr(obj, attr_name, None)
             if value is None:
                 return [c_api.PM_ERR_VALUE, 0]
