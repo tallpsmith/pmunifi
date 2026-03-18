@@ -2,6 +2,8 @@
 # Requires: just, uv
 # Install: brew install just uv
 
+set dotenv-load
+
 venv_dir := env("VENV_DIR", ".venv")
 
 # List available recipes
@@ -31,6 +33,35 @@ check:
 # Build sdist and wheel
 build:
     uv build
+
+# Build wheel, install into a fresh venv, deploy PMDA files, and register
+# Simulates a full PyPI install without publishing a release
+#
+# Set these env vars in .env (loaded automatically via dotenv-load):
+#   UNIFI_URL         - controller URL        (e.g. https://10.120.1.1)
+#   UNIFI_API_KEY     - API key
+#   UNIFI_IS_UDM      - true/false            (default: true)
+#   UNIFI_VERIFY_SSL  - true/false            (default: true)
+#   UNIFI_SITES       - comma-separated names (default: all)
+#   UNIFI_POLL_INTERVAL - seconds             (default: 10)
+trial-install: clean-dist build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    trial_dir="${TRIAL_VENV:-/tmp/pcp-pmda-unifi-trial}"
+    if [[ -z "$trial_dir" || "$trial_dir" == "/" || "$trial_dir" == "/tmp" ]]; then
+        echo "ERROR: TRIAL_VENV resolved to '$trial_dir' — refusing to sudo rm -rf that." >&2
+        exit 1
+    fi
+    echo "Removing previous trial venv at $trial_dir (requires sudo)..."
+    sudo rm -rf "$trial_dir"
+    uv venv "$trial_dir"
+    uv pip install --python "$trial_dir/bin/python" dist/pcp_pmda_unifi-*.whl
+    sudo "$trial_dir/bin/pcp-pmda-unifi-setup" install
+    cd /var/lib/pcp/pmdas/unifi && sudo -E ./Install -e
+
+# Remove old wheels/sdists before a fresh build
+clean-dist:
+    rm -rf dist/
 
 # Serve docs locally
 docs:
