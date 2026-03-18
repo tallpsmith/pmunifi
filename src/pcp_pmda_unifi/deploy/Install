@@ -32,6 +32,14 @@ daemon_opt=false
 # The Python helper does the heavy lifting (connectivity checks, config gen)
 python=${PCP_PYTHON_PROG:-pmpython}
 
+# If the package was pip-installed into a venv, python_env.sh records its
+# site-packages path so pmpython (system Python) can find the module.
+_script_dir="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$_script_dir/python_env.sh" ]; then
+    . "$_script_dir/python_env.sh"
+    export PYTHONPATH="${PMDA_PYTHONPATH}${PYTHONPATH:+:$PYTHONPATH}"
+fi
+
 # ---------------------------------------------------------------------------
 # Upgrade mode: skip all prompts, just re-register with PMCD
 # ---------------------------------------------------------------------------
