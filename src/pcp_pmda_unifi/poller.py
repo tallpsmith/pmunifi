@@ -140,7 +140,7 @@ class ControllerPoller(threading.Thread):
         """Resolve site list, discovering from the controller if set to 'all'."""
         if self._sites == ["all"]:
             discovered = self._client.discover_sites()
-            names: List[str] = [s["name"] for s in discovered if s.get("name")]
+            names = [str(s["name"]) for s in discovered if s.get("name")]
             log.info("Discovered %d sites: %s", len(names), ", ".join(names))
             return names
         return self._sites
