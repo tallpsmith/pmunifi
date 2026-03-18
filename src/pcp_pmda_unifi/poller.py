@@ -36,7 +36,7 @@ class ControllerPoller(threading.Thread):
         controller_name: str,
         client: UnifiClient,
         sites: List[str],
-        poll_interval: int = 30,
+        poll_interval: int = 10,
         max_clients: int = 1000,
         enable_dpi: bool = False,
     ):
@@ -136,13 +136,23 @@ class ControllerPoller(threading.Thread):
 
     # -- Internal helpers -----------------------------------------------------
 
+    def _resolve_sites(self) -> List[str]:
+        """Resolve site list, discovering from the controller if set to 'all'."""
+        if self._sites == ["all"]:
+            discovered = self._client.discover_sites()
+            names = [s.get("name") for s in discovered if s.get("name")]
+            log.info("Discovered %d sites: %s", len(names), ", ".join(names))
+            return names
+        return self._sites
+
     def _poll_all_sites(self) -> Snapshot:
         """Fetch data from all configured sites and merge into one Snapshot."""
         merged_sites: Dict[str, SiteData] = {}
         total_devices = 0
         total_clients = 0
 
-        for site_name in self._sites:
+        resolved_sites = self._resolve_sites()
+        for site_name in resolved_sites:
             site_snapshot = self._poll_single_site(site_name)
             for name, site_data in site_snapshot.sites.items():
                 merged_sites[name] = site_data
@@ -155,7 +165,7 @@ class ControllerPoller(threading.Thread):
             sites=merged_sites,
             devices_discovered=total_devices,
             clients_discovered=total_clients,
-            sites_polled=len(self._sites),
+            sites_polled=len(resolved_sites),
         )
 
     def _poll_single_site(self, site_name: str) -> Snapshot:

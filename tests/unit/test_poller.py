@@ -70,7 +70,7 @@ class TestPollerConstruction:
     def test_default_poll_interval(self):
         client = _make_mock_client()
         poller = ControllerPoller("main", client, sites=["default"])
-        assert poller.poll_interval == 30
+        assert poller.poll_interval == 10
 
     def test_custom_poll_interval(self):
         client = _make_mock_client()
@@ -476,3 +476,54 @@ class TestPollerDpiOptIn:
         poller.poll_once()
         site = poller.snapshot.sites["default"]
         assert site.dpi_categories == []
+
+
+# ---------------------------------------------------------------------------
+# sites=["all"] auto-discovery
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestPollerSiteDiscovery:
+    """When sites contains 'all', poller discovers real site names first."""
+
+    def test_all_resolves_via_discover_sites(self):
+        """sites=['all'] should call discover_sites and poll each real site."""
+        client = _make_mock_client()
+        client.discover_sites.return_value = [
+            {"name": "default", "desc": "Default"},
+            {"name": "branch", "desc": "Branch Office"},
+        ]
+        poller = ControllerPoller("main", client, sites=["all"])
+        poller.poll_once()
+        client.discover_sites.assert_called_once()
+        client.fetch_devices.assert_any_call("default")
+        client.fetch_devices.assert_any_call("branch")
+
+    def test_all_does_not_poll_literal_all(self):
+        """The poller must never pass 'all' as a site name to the API."""
+        client = _make_mock_client()
+        client.discover_sites.return_value = [
+            {"name": "default", "desc": "Default"},
+        ]
+        poller = ControllerPoller("main", client, sites=["all"])
+        poller.poll_once()
+        for call in client.fetch_devices.call_args_list:
+            assert call.args[0] != "all"
+
+    def test_explicit_sites_skip_discovery(self):
+        """Named sites should not trigger discover_sites."""
+        client = _make_mock_client()
+        poller = ControllerPoller("main", client, sites=["default"])
+        poller.poll_once()
+        client.discover_sites.assert_not_called()
+
+    def test_all_snapshot_contains_discovered_sites(self):
+        """Snapshot should have data keyed by discovered site names."""
+        client = _make_mock_client()
+        client.discover_sites.return_value = [
+            {"name": "main-site", "desc": "Main"},
+        ]
+        poller = ControllerPoller("main", client, sites=["all"])
+        poller.poll_once()
+        assert "main-site" in poller.snapshot.sites
