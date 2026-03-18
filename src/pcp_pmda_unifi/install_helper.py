@@ -95,7 +95,7 @@ def generate_config(
     sites: Optional[List[Dict]] = None,
     is_udm: bool = True,
     verify_ssl: bool = True,
-    poll_interval: int = 30,
+    poll_interval: int = 10,
 ) -> str:
     """Build a valid INI config string for unifi.conf.
 
@@ -150,7 +150,7 @@ def build_config_from_env() -> Optional[str]:
     sites_raw = os.environ.get("UNIFI_SITES", "all")
     is_udm = _env_bool("UNIFI_IS_UDM", default=True)
     verify_ssl = _env_bool("UNIFI_VERIFY_SSL", default=True)
-    poll_interval = int(os.environ.get("UNIFI_POLL_INTERVAL", "30"))
+    poll_interval = int(os.environ.get("UNIFI_POLL_INTERVAL", "10"))
 
     # Convert sites string to list-of-dicts format expected by generate_config
     if sites_raw.strip().lower() == "all":
@@ -210,7 +210,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--verify-ssl", default="true", help="Verify SSL (true/false)")
     parser.add_argument("--sites", help="Comma-separated site names")
     parser.add_argument("--controller-name", default="default", help="Controller section name")
-    parser.add_argument("--poll-interval", type=int, default=30, help="Poll interval in seconds")
+    parser.add_argument("--poll-interval", type=int, default=10, help="Poll interval in seconds")
 
     return parser
 

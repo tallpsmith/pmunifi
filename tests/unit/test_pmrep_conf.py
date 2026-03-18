@@ -154,9 +154,9 @@ class TestRateViewOverrides:
         assert conf.get(section, "samples") == "2"
 
     @pytest.mark.parametrize("section", RATE_SECTIONS)
-    def test_rate_view_has_interval_5s(self, conf, section):
-        """Rate views use a 5-second interval between samples."""
-        assert conf.get(section, "interval") == "5s"
+    def test_rate_view_interval_exceeds_poll_default(self, conf, section):
+        """Rate views interval (15s) exceeds default poll_interval (10s)."""
+        assert conf.get(section, "interval") == "15s"
 
 
 

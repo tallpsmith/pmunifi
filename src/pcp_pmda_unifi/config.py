@@ -27,7 +27,7 @@ MINIMUM_POLL_INTERVAL = 10
 @dataclass
 class GlobalSettings:
     """PMDA-wide configuration knobs."""
-    poll_interval: int = 30
+    poll_interval: int = 10
     max_clients: int = 1000
     grace_period: int = 300
     enable_dpi: bool = False
